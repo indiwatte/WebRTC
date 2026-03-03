@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebRTC</title>
+    <style>
+        video {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Sender</h1>
+    <video id="myCamera" playsinline autoplay muted></video>
+    <label for="peerSelect">Peer: </label><select id="peerSelect"></select>
+
+    <script src="https://172.30.139.6:443/socket.io/socket.io.js"></script>
+    <script type="module">
+
+        // STEP 1: Get references to our HTML elements
+        // Think of this like giving names to things on the page so we can use them later
+        const $myCamera = document.getElementById('myCamera');  // The video tag that shows OUR webcam
+        const $peerSelect = document.getElementById('peerSelect');  // The dropdown menu to pick who to call
+
+        // STEP 2: Create variables to store important stuff we'll need later
+        let socket;  // This is like a "phone line" to talk to the server
+        let myStream;  // This will hold our webcam video and audio
+        let peerConnection;  // This is the direct connection to the other person (like a video call line)
+
+        // STEP 3: Setup information to help computers find each other on the internet
+        // STUN server = like a helper that tells each computer "here's your address on the internet"
+        const servers = {
+            iceServers: [{
+                urls: 'stun:stun.l.google.com:19302'  // Google's free helper server
+            }]
+        };
+
+        // STEP 4: The main startup function - this runs when the page loads
+        const init = async () => {
+            // First, connect to our server
+            initSocket();
+
+            // Second, ask the user "Can I use your camera and microphone?"
+            const constraints = { audio: true, video: { width: 1280, height: 720 } };
+            myStream = await navigator.mediaDevices.getUserMedia(constraints);
+
+            // Third, show our own camera on the screen
+            $myCamera.srcObject = myStream;
+
+            // Fourth, listen for when someone picks a person from the dropdown to call
+            $peerSelect.addEventListener('input', callSelectedPeer);
+        };
+
+        // STEP 5: Connect to the server and set up listeners
+        // Think of this like plugging in a phone and setting it to ring when someone calls
+        const initSocket = () => {
+            // Connect to the PROJECTION server (like dialing into a phone system)
+            socket = io.connect('https://172.30.139.6:443');
+
+            // When we successfully connect, show our ID (like getting a phone number)
+            socket.on('connect', () => {
+                console.log(socket.id);  // This is our unique ID - like our phone number
+            });
+
+            // When the server tells us who else is online, update our dropdown list
+            socket.on('clients', updatePeerList);
+
+            // When the other person says "OK, I'm ready to receive your video" (the answer)
+            socket.on('peerAnswer', async (myId, answer, peerId) => {
+                console.log(`Received peerAnswer from ${peerId}`);
+                console.log(answer);
+                await handlePeerAnswer(myId, answer, peerId);  // Process their answer
+            });
+
+            // When we get "directions" on how to reach the other person (ICE candidates)
+            // Think of ICE candidates like GPS coordinates - they help us find the best path
+            socket.on('peerIce', async (myId, candidate, peerId) => {
+                console.log(`Received peerIce from ${peerId}`, candidate);
+                await handlePeerIce(myId, candidate, peerId);  // Save these directions
+            });
+        };
+
+        // STEP 6: Update the dropdown list with people we can call
+        // Like updating your contacts list with who's available to talk
+        const updatePeerList = (clients) => {
+            // Start with an empty list and a "please select" option
+            $peerSelect.innerHTML = '<option value="none">--- Select Peer To Call ---</option>';
+
+            // Go through everyone who's connected
+            for (const clientId in clients) {
+                const isMyOwnId = (clientId === socket.id);  // Check if this is US (we don't want to call ourselves!)
+
+                // If it's someone else (not us), add them to the list
+                if (clients.hasOwnProperty(clientId) && !isMyOwnId) {
+                    const client = clients[clientId];
+                    const $option = document.createElement('option');  // Create a new option in the dropdown
+                    $option.value = clientId;  // Store their ID
+                    $option.textContent = clientId;  // Show their ID as text
+                    $peerSelect.appendChild($option);  // Add it to the dropdown
+                }
+            }
+        };
+
+        // STEP 7: When someone picks a person from the dropdown, start the call!
+        const callSelectedPeer = async () => {
+            console.log('call selected peer', $peerSelect.value);
+            callPeer($peerSelect.value);  // Start calling the selected person
+        };
+
+        // STEP 8: THE BIG ONE - Actually make the call!
+        // This is like dialing someone and setting up the video call
+        const callPeer = async (peerId) => {
+            // Create a new connection line to the other person
+            peerConnection = new RTCPeerConnection(servers);
+
+            // Set up a listener: whenever we get "directions" to reach the other person,
+            // send those directions through the server to them
+            // (ICE candidates = different paths/routes we could use to connect)
+            peerConnection.onicecandidate = (e) => {
+                console.log('ice candidate', e.candidate);
+                socket.emit('peerIce', peerId, e.candidate);  // Send the route info to the other person
+            };
+
+            // Add our camera and microphone to the connection
+            // It's like saying "here's what I want to send you"
+            for (const track of myStream.getTracks()) {
+                peerConnection.addTrack(track, myStream);  // Add each audio/video track
+            }
+
+            // Create an "offer" - this is like saying "Hey, want to video chat? Here's my info"
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);  // Save it as OUR side of the connection
+            socket.emit('peerOffer', peerId, offer);  // Send the offer to the other person through the server
+        };
+
+        // STEP 9: When the other person answers our call
+        // They send back their info, and we save it
+        const handlePeerAnswer = async (myId, answer, peerId) => {
+            await peerConnection.setRemoteDescription(answer);  // Save THEIR side of the connection
+            // Now both sides know about each other and can connect!
+        };
+
+        // STEP 10: Handle the "GPS directions" from the other person
+        // These help us find the best path to connect to them
+        const handlePeerIce = async (myId, candidate, peerId) => {
+            if (!candidate) {
+                return;  // If there's no direction, skip it
+            }
+            await peerConnection.addIceCandidate(candidate);  // Save this route option
+        };
+
+        init();
+
+    </script>
+</body>
+
+</html>
