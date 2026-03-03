@@ -8,8 +8,8 @@
 </head>
 
 <body>
-    <h1>Typewriter</h1>
-    <p><a href="#" id="remoteUrl">Scan to connect</a></p>
+    <p><a href="#" id="remoteUrl">open remote</a></p>
+
 
     <form id="nameForm">
         <input id="nameInput" type="text" name="nameInput" placeholder="Enter your name" />
@@ -21,7 +21,6 @@
     </form>
 
     <textarea name="messages" id="messages"></textarea>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
 
     <script>
@@ -37,25 +36,25 @@
             const $nameForm = document.getElementById('nameForm');
 
             let socket;
-            let targetSocketId = null;
+            let targetSocketId;
+            let socketIds = [];
 
+            const getUrlParameter = name => {
+                name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+                const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+                const results = regex.exec(location.search);
+                return results === null ? false : decodeURIComponent(results[1].replace(/\+/g, ' '));
+            };
 
             const init = () => {
+                targetSocketId = getUrlParameter('targetSocketId');
+                console.log('Target Socket ID:', targetSocketId);
+
                 socket = io.connect('/');
                 socket.on('connect', () => {
                     console.log(`Connected to server: ${socket.id}`);
-                    const url = `${window.location}//remote.html?targetSocketId=${socket.id}`;
-
-                    $remoteUrl.textContent = url;
-                    $remoteUrl.setAttribute('href', url);
-
-                    const typeNumber = 4;
-                    const errorCorrectionLevel = 'L';
-                    const qr = qrcode(typeNumber, errorCorrectionLevel);
-                    qr.addData(url);
-                    qr.make();
-                    $remoteUrl.innerHTML = qr.createImgTag();
-
+                    $remoteUrl.textContent = socket.id;
+                    $remoteUrl.setAttribute('href', 'http://localhost/remote.html?targetSocketId=' + socket.id);
                 });
 
 

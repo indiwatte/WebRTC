@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+
+
+    <script src="http://172.30.139.15:80/socket.io/socket.io.js"></script>
+
+    <script>
+
+        let socket; // will be assigned a value later
+
+        const init = () => {
+            socket = io.connect("http://172.30.139.15:80");
+            window.addEventListener(`mousemove`, e => handleMouseMove(e));
+
+            socket.on(`update`, clients => {
+                console.log(clients);
+            });
+        };
+        const handleMouseMove = e => {
+            if (socket.connected) {
+                socket.emit(`update`, {
+                    x: e.clientX / window.innerWidth,
+                    y: e.clientY / window.innerHeight
+                });
+            }
+        };
+
+
+        init();</script>
+
+</body>
+
+</html>
