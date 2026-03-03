@@ -9,16 +9,93 @@
 
 <body>
     <h1>Typewriter</h1>
+    <p><a href="#" id="remoteUrl">Scan to connect</a></p>
+
+    <form id="nameForm">
+        <input id="nameInput" type="text" name="nameInput" placeholder="Enter your name" />
+        <button type="submit">Set Name</button>
+    </form>
+    <form id="msgForm">
+        <input id="msgInput" type="text" name="msgInput" placeholder="Type a message" />
+        <button type="submit">Send Message</button>
+    </form>
+
+    <textarea name="messages" id="messages"></textarea>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
 
     <script>
 
 
         {
+            const $remoteUrl = document.getElementById('remoteUrl');
+            const $msgForm = document.getElementById('msgForm');
+            const $msgInput = document.getElementById('msgInput');
+            const $messages = document.getElementById('messages');
+
+            const $nameInput = document.getElementById('nameInput');
+            const $nameForm = document.getElementById('nameForm');
 
             let socket;
+            let targetSocketId = null;
+
+
             const init = () => {
-                socket = io();
+                socket = io.connect('/');
+                socket.on('connect', () => {
+                    console.log(`Connected to server: ${socket.id}`);
+                    const url = `${window.location}//remote.html?targetSocketId=${socket.id}`;
+
+                    $remoteUrl.textContent = url;
+                    $remoteUrl.setAttribute('href', url);
+
+                    const typeNumber = 4;
+                    const errorCorrectionLevel = 'L';
+                    const qr = qrcode(typeNumber, errorCorrectionLevel);
+                    qr.addData(url);
+                    qr.make();
+                    $remoteUrl.innerHTML = qr.createImgTag();
+
+                });
+
+
+                socket.on('message', (client, message) => {
+                    console.log(`Received message: ${message}`);
+                    console.log(client);
+                    $messages.value += `${client.name} says: ${message}\n`;
+                });
+
+                socket.on('nameError', error => {
+                    alert(error);
+                });
+
+                socket.on('messageError', error => {
+                    alert(error);
+                });
+
+                socket.on('name', client => {
+                    alert(`Name set to: ${client.name}`);
+                });
+
+                socket.on('clientList', clients => {
+                    console.log('Available clients:', clients);
+                });
+
+                socket.on('update', (client, data) => {
+                    console.log('Received update from:', client, 'Data:', data);
+                });
+
+                $msgForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    socket.emit('message', $msgInput.value);
+                    $msgInput.value = '';
+                });
+
+                $nameForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    socket.emit('name', $nameInput.value);
+                    $nameInput.value = '';
+                });
             };
             init();
         }
