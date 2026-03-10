@@ -5,98 +5,281 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Typewriter application</title>
+    <link rel="stylesheet" href="https://use.typekit.net/njf0vdi.css">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #FDF8F9;
+            /* Notebook-like square grid (graph paper) */
+            background-image:
+                linear-gradient(to right, rgba(0, 0, 0, 0.06) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0, 0, 0, 0.06) 1px, transparent 1px);
+            background-size: 36px 36px;
+            background-position: 0 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            text-align: center;
+            position: relative;
+            display: inline-block;
+            padding-bottom: 220px;
+            /* more space for the larger typewriter image */
+        }
+
+        .qr-section {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            text-align: center;
+        }
+
+        .qr-section p {
+            margin: 5px 0;
+        }
+
+        #remoteUrl img {
+            border: 3px solid #333;
+            padding: 10px;
+            background-color: pink;
+        }
+
+        h1,
+        p {
+            font-family: "p22-typewriter",
+                sans-serif;
+            font-weight: 400;
+            font-style: normal;
+        }
+
+        #letterDisplay {
+            width: 380px;
+
+            min-height: 380px;
+            padding: 18px;
+            font-size: 24px;
+            font-family: "p22-typewriter", sans-serif;
+            border: 2px solid #333;
+
+            position: relative;
+
+            background: #ffffff;
+        }
+
+        .typewriter-img {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: -140px;
+            /* tuck the machine further under the paper */
+            width: 1300px;
+            /* intentionally wider than the paper */
+
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .heart-stamp,
+        .heart-stamp-svg {
+            position: fixed;
+            width: 100px;
+            height: 100px;
+            pointer-events: none;
+            z-index: 100;
+            animation: stampIn 0.3s ease;
+            will-change: transform, opacity;
+            background: transparent;
+        }
+
+        @keyframes stampIn {
+            0% {
+                transform: scale(0) rotate(-45deg);
+                opacity: 0;
+            }
+
+            50% {
+                transform: scale(1.2) rotate(0deg);
+            }
+
+            100% {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+    </style>
 </head>
 
 <body>
-    <h1>Typewriter</h1>
-    <p><a href="#" id="remoteUrl">Scan to connect</a></p>
+    <div class="qr-section">
+        <p>Scan to write your letter</p>
+        <p><a href="#" id="remoteUrl">Scan to connect</a></p>
+        <p><button id="enableAudioBtn" style="margin-top:6px">Enable sound</button></p>
+    </div>
 
-    <form id="nameForm">
-        <input id="nameInput" type="text" name="nameInput" placeholder="Enter your name" />
-        <button type="submit">Set Name</button>
-    </form>
-    <form id="msgForm">
-        <input id="msgInput" type="text" name="msgInput" placeholder="Type a message" />
-        <button type="submit">Send Message</button>
-    </form>
-
-    <textarea name="messages" id="messages"></textarea>
+    <div class="container">
+        <h1>Dear you...</h1>
+        <h2>A digital love letter machine</h2>
+        <textarea id="letterDisplay" readonly placeholder="Waiting for connection..."></textarea>
+        <div class="typewriter-wrap">
+            <img class="typewriter-img" src="images/typemachine-draft.png" alt="typewriter">
+        </div>
+        <audio id="typewriterSound" src="audio/typesound.mp3" preload="auto"></audio>
+        <audio id="bellSound" src="audio/bell.mp3" preload="auto"></audio>
+    </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-peer/9.11.1/simplepeer.min.js"></script>
 
     <script>
-
-
         {
             const $remoteUrl = document.getElementById('remoteUrl');
-            const $msgForm = document.getElementById('msgForm');
-            const $msgInput = document.getElementById('msgInput');
-            const $messages = document.getElementById('messages');
-
-            const $nameInput = document.getElementById('nameInput');
-            const $nameForm = document.getElementById('nameForm');
+            const $letterDisplay = document.getElementById('letterDisplay');
+            const $typewriterSound = document.getElementById('typewriterSound');
+            const $bellSound = document.getElementById('bellSound');
 
             let socket;
-            let targetSocketId = null;
+            let peer;
+            let lastLength = 0;
 
+            // Play typewriter sound (clones audio for overlapping sounds)
+            const playTypewriterSound = () => {
+                try {
+                    const sound = $typewriterSound.cloneNode();
+                    sound.play().catch(err => console.log('Audio play failed:', err));
+                } catch (err) {
+                    console.error('Error playing sound:', err);
+                }
+            };
+
+            // Play bell sound
+            const playBellSound = () => {
+                try {
+                    const sound = $bellSound.cloneNode();
+                    sound.play().catch(err => console.log('Bell play failed:', err));
+                } catch (err) {
+                    console.error('Error playing bell:', err);
+                }
+            };
+
+            // Add heart stamp at random position using inline SVG (transparent)
+            const addHeartStamp = () => {
+                const svgns = 'http://www.w3.org/2000/svg';
+                const svg = document.createElementNS(svgns, 'svg');
+                svg.setAttribute('viewBox', '0 0 24 24');
+                svg.setAttribute('xmlns', svgns);
+                svg.setAttribute('class', 'heart-stamp-svg');
+
+                // Heart path (no background, uses fill color)
+                const path = document.createElementNS(svgns, 'path');
+                path.setAttribute('d', 'M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6 4 4 6.5 4 8.24 4 9.91 5 11 6.09 12.09 5 13.76 4 15.5 4 18 4 20 6 20 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z');
+                path.setAttribute('fill', '#ff3b6b');
+
+                svg.appendChild(path);
+
+                // Random position within viewport
+                const size = 100;
+                const x = Math.random() * (window.innerWidth - size);
+                const y = Math.random() * (window.innerHeight - size);
+                svg.style.left = x + 'px';
+                svg.style.top = y + 'px';
+                svg.style.width = size + 'px';
+                svg.style.height = size + 'px';
+
+                const rotation = (Math.random() - 0.5) * 30; // -15 to +15 degrees
+                svg.style.transform = `rotate(${rotation}deg)`;
+
+                document.body.appendChild(svg);
+            };
 
             const init = () => {
                 socket = io.connect('/');
                 socket.on('connect', () => {
-                    console.log(`Connected to server: ${socket.id}`);
-                    const url = `${window.location}//remote.html?targetSocketId=${socket.id}`;
+                    console.log(`Desktop connected: ${socket.id}`);
+                    const url = `${window.location.origin}/remote.html?targetSocketId=${socket.id}`;
 
                     $remoteUrl.textContent = url;
                     $remoteUrl.setAttribute('href', url);
 
+                    // Generate QR code
                     const typeNumber = 4;
                     const errorCorrectionLevel = 'L';
                     const qr = qrcode(typeNumber, errorCorrectionLevel);
                     qr.addData(url);
                     qr.make();
                     $remoteUrl.innerHTML = qr.createImgTag();
-
                 });
 
+                // Listen for WebRTC signals from remote
+                socket.on('signal', (myId, signal, peerId) => {
+                    console.log(`Received signal from ${peerId}`);
 
-                socket.on('message', (client, message) => {
-                    console.log(`Received message: ${message}`);
-                    console.log(client);
-                    $messages.value += `${client.name} says: ${message}\n`;
-                });
+                    // If this is an offer, create a peer connection to answer
+                    if (signal.type === 'offer') {
+                        createPeer(false, peerId);
+                    }
 
-                socket.on('nameError', error => {
-                    alert(error);
-                });
-
-                socket.on('messageError', error => {
-                    alert(error);
-                });
-
-                socket.on('name', client => {
-                    alert(`Name set to: ${client.name}`);
-                });
-
-                socket.on('clientList', clients => {
-                    console.log('Available clients:', clients);
-                });
-
-                socket.on('update', (client, data) => {
-                    console.log('Received update from:', client, 'Data:', data);
-                });
-
-                $msgForm.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    socket.emit('message', $msgInput.value);
-                    $msgInput.value = '';
-                });
-
-                $nameForm.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    socket.emit('name', $nameInput.value);
-                    $nameInput.value = '';
+                    // Forward the signal to SimplePeer
+                    if (peer) {
+                        peer.signal(signal);
+                    }
                 });
             };
+
+            const createPeer = (initiator, peerId) => {
+                console.log(`Creating peer connection (initiator: ${initiator})`);
+
+                peer = new SimplePeer({
+                    initiator,
+                    trickle: false // Wait for all ICE candidates before sending offer/answer
+                });
+
+                // Send WebRTC signals through socket.io
+                peer.on('signal', data => {
+                    console.log('Sending signal');
+                    socket.emit('signal', peerId, data);
+                });
+
+                // Handle incoming data through data channel
+                peer.on('data', data => {
+                    const message = data.toString();
+
+                    // Check if it's a bell signal
+                    if (message === '__BELL__') {
+                        playBellSound();
+                        return;
+                    }
+
+                    // Check if it's a sticker signal
+                    if (message === '__STICKER__') {
+                        addHeartStamp();
+                        return;
+                    }
+
+                    console.log('Received letter data:', message);
+
+                    // Play typewriter sound if text was added (not deleted)
+                    if (message.length > lastLength) {
+                        playTypewriterSound();
+                    }
+
+                    lastLength = message.length;
+                    $letterDisplay.value = message;
+                });
+
+                peer.on('connect', () => {
+                    console.log('WebRTC connection established!');
+                    $letterDisplay.placeholder = 'Start typing on your phone...';
+                });
+
+                peer.on('error', err => {
+                    console.error('Peer error:', err);
+                });
+            };
+
             init();
         }
 

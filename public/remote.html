@@ -5,40 +5,117 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Typewriter application</title>
+    <link rel="stylesheet" href="https://use.typekit.net/njf0vdi.css">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+
+        }
+
+        .container {
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+
+            font-weight: 400;
+            font-style: normal;
+        }
+
+        #status {
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            background: #f0f0f0;
+            font-family: "p22-typewriter", sans-serif;
+        }
+
+        #status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .ink-color-selector {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .color-ball {
+            width: 20px;
+            height: 20px;
+            background-color: black;
+            border-radius: 50%;
+            border: 2px solid #333;
+        }
+
+        .sticker-selector {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .heart-icon {
+            width: 100px;
+            height: 100px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .heart-icon:active {
+            transform: scale(1.2);
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 300px;
+            padding: 15px;
+            font-size: 16px;
+
+        }
+    </style>
 </head>
 
 <body>
-    <p><a href="#" id="remoteUrl">open remote</a></p>
+    <div class="container">
+        <h1>Type your letter here</h1>
+        <div id="status">Connecting...</div>
+        <div class="ink-color-selector">
+            <div>ink color</div>
+            <div class="color-ball"></div>
+        </div>
+        <div class="sticker-selector">
+            <div>sticker</div>
+            <img src="images/heart.png" alt="heart" class="heart-icon">
+        </div>
+        <textarea id="letterInput" placeholder="Start typing..."></textarea>
+    </div>
 
-
-    <form id="nameForm">
-        <input id="nameInput" type="text" name="nameInput" placeholder="Enter your name" />
-        <button type="submit">Set Name</button>
-    </form>
-    <form id="msgForm">
-        <input id="msgInput" type="text" name="msgInput" placeholder="Type a message" />
-        <button type="submit">Send Message</button>
-    </form>
-
-    <textarea name="messages" id="messages"></textarea>
     <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-peer/9.11.1/simplepeer.min.js"></script>
 
     <script>
-
-
         {
-            const $remoteUrl = document.getElementById('remoteUrl');
-            const $msgForm = document.getElementById('msgForm');
-            const $msgInput = document.getElementById('msgInput');
-            const $messages = document.getElementById('messages');
-
-            const $nameInput = document.getElementById('nameInput');
-            const $nameForm = document.getElementById('nameForm');
+            const $letterInput = document.getElementById('letterInput');
+            const $status = document.getElementById('status');
 
             let socket;
+            let peer;
             let targetSocketId;
-            let socketIds = [];
 
+            // Get target socket ID from URL parameter
             const getUrlParameter = name => {
                 name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
                 const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
@@ -48,54 +125,90 @@
 
             const init = () => {
                 targetSocketId = getUrlParameter('targetSocketId');
+
+                if (!targetSocketId) {
+                    $status.textContent = 'Error: No target ID provided in URL';
+                    return;
+                }
+
                 console.log('Target Socket ID:', targetSocketId);
+                $status.textContent = 'Connecting to desktop...';
 
                 socket = io.connect('/');
                 socket.on('connect', () => {
-                    console.log(`Connected to server: ${socket.id}`);
-                    $remoteUrl.textContent = socket.id;
-                    $remoteUrl.setAttribute('href', 'http://localhost/remote.html?targetSocketId=' + socket.id);
+                    console.log(`Phone connected: ${socket.id}`);
+                    $status.textContent = 'Creating connection...';
+
+                    // We are the initiator - create offer
+                    createPeer(true, targetSocketId);
                 });
 
+                // Listen for WebRTC signals from desktop
+                socket.on('signal', (myId, signal, peerId) => {
+                    console.log(`Received signal from ${peerId}`);
 
-                socket.on('message', (client, message) => {
-                    console.log(`Received message: ${message}`);
-                    console.log(client);
-                    $messages.value += `${client.name} says: ${message}\n`;
-                });
-
-                socket.on('nameError', error => {
-                    alert(error);
-                });
-
-                socket.on('messageError', error => {
-                    alert(error);
-                });
-
-                socket.on('name', client => {
-                    alert(`Name set to: ${client.name}`);
-                });
-
-                socket.on('clientList', clients => {
-                    console.log('Available clients:', clients);
-                });
-
-                socket.on('update', (client, data) => {
-                    console.log('Received update from:', client, 'Data:', data);
-                });
-
-                $msgForm.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    socket.emit('message', $msgInput.value);
-                    $msgInput.value = '';
-                });
-
-                $nameForm.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    socket.emit('name', $nameInput.value);
-                    $nameInput.value = '';
+                    // Forward the signal to SimplePeer
+                    if (peer) {
+                        peer.signal(signal);
+                    }
                 });
             };
+
+            const createPeer = (initiator, peerId) => {
+                console.log(`Creating peer connection (initiator: ${initiator})`);
+
+                peer = new SimplePeer({
+                    initiator,
+                    trickle: false // Wait for all ICE candidates before sending offer/answer
+                });
+
+                // Send WebRTC signals through socket.io
+                peer.on('signal', data => {
+                    console.log('Sending signal');
+                    socket.emit('signal', peerId, data);
+                });
+
+                // Connection established
+                peer.on('connect', () => {
+                    console.log('WebRTC connection established!');
+                    $status.textContent = 'Connected to desktop!';
+                    $status.classList.add('connected');
+                });
+
+                // Handle errors
+                peer.on('error', err => {
+                    console.error('Peer error:', err);
+                    $status.textContent = 'Connection error: ' + err.message;
+                });
+            };
+
+            // Send letter content on every keystroke through data channel
+            $letterInput.addEventListener('input', (e) => {
+                if (peer && peer.connected) {
+                    const letterContent = e.target.value;
+                    peer.send(letterContent);
+                } else {
+                    console.log('Peer not connected yet');
+                }
+            });
+
+            // Detect Enter key and send bell signal
+            $letterInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && peer && peer.connected) {
+                    peer.send('__BELL__');
+                }
+            });
+
+            // Send sticker when heart is clicked
+            document.querySelector('.heart-icon').addEventListener('click', () => {
+                if (peer && peer.connected) {
+                    peer.send('__STICKER__');
+                    console.log('Sticker sent!');
+                } else {
+                    console.log('Peer not connected yet');
+                }
+            });
+
             init();
         }
 
