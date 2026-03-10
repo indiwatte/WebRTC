@@ -71,7 +71,11 @@ io.on('connection', (socket) => {
         } //we will send the update message to the target socket id with the data sent by the client
     });
 
-
+    // WebRTC signaling - forward signals between peers
+    socket.on('signal', (peerId, signal) => {
+        console.log(`Received signal from ${socket.id} to ${peerId}`);
+        io.to(peerId).emit('signal', peerId, signal, socket.id);
+    });
 
     socket.on('disconnect', () => {
         delete clients[socket.id]; //when the user disconnects, we will remove the socket id from the clients object
