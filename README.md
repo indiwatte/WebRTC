@@ -337,3 +337,31 @@ Then `triggerCarriageReturn()` removes and re-adds animation classes so the moti
 - Small animations can make an interaction feel much more physical
 - Sound alone was not enough for the typewriter illusion
 - Mobile Enter handling needs extra care compared to desktop keyboards
+
+---
+
+## Latest Progress Update (March 2026)
+
+Here is what I improved recently after the sections above:
+
+- Made the heart effect softer with smoother appear/fade animation
+- Hearts now stay visible a bit longer before disappearing
+- Not every key creates a fully different heart now (less random/jumpy feel)
+- Moved the typewriter parts more toward the center so the keys are visible
+- Updated server port handling to `process.env.PORT || 3000` so deployment is easier
+- Checked deployment options and confirmed Render is the easiest full hosting option
+
+This made the project feel more polished visually and also more ready to share with friends online.
+
+## Where I used Copilot help when I got stuck
+
+- Fixing connection/setup issues (socket signaling flow and `targetSocketId` logic)
+- Solving runtime errors (`EADDRINUSE`, missing elements, and callback bracket errors)
+- Debugging remote page issues (`getUrlParameter` order issue)
+- Improving UI behavior (heart animation timing + smoother transitions)
+- Adjusting layout (moving the typewriter up so keys are visible)
+- Deployment readiness (changing server to `process.env.PORT || 3000` and choosing Render)
+
+## Short Summary
+
+I used Copilot mostly for debugging and polishing. When I got stuck, it helped me fix connection errors, improve animations, correct layout problems, and prepare the app for deployment. The app now feels smoother, looks better, and is easier to share.
