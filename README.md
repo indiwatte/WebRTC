@@ -289,3 +289,51 @@ const playTypewriterSound = () => {
 - Heart sticker stamps that can be placed on the desktop view
 - QR code for easy phone connection
 - All communication through WebRTC data channels (P2P)
+
+---
+
+## Adding the Moving Typewriter Effect
+
+After getting the bell sound working on Enter, I wanted the typewriter to also **move visually** so it felt more like a real typewriter carriage return.
+
+### Goal
+- When Enter is pressed on the phone, the desktop should not only play the bell sound
+- The typewriter image should move quickly and snap back
+- The paper/letter area should also shift a little to make it feel mechanical
+
+### Problem
+At first, Enter only triggered the bell sound. That meant the interaction worked, but it did not look physical enough.
+
+Another issue was that phone keyboards do not always handle Enter exactly like desktop keyboards, so relying only on `keydown` was not fully reliable.
+
+### Solution
+I kept the existing `__BELL__` signal, but made it do more on the desktop side:
+
+- play the bell sound
+- trigger a carriage-return animation on the typewriter image
+- trigger a small paper movement animation on the text area
+
+I also improved the phone side so Enter can still be detected on mobile by checking line-break input behavior as well.
+
+### Desktop animation idea
+On the desktop page, I added animation classes and keyframes in CSS:
+
+```javascript
+if (message === '__BELL__') {
+    playBellSound();
+    triggerCarriageReturn();
+    return;
+}
+```
+
+Then `triggerCarriageReturn()` removes and re-adds animation classes so the motion can replay every time Enter is pressed.
+
+### Why this helped
+- The app now has both **sound feedback** and **movement feedback**
+- Pressing Enter feels more like using a real typewriter
+- The project became stronger visually, not just technically
+
+### What I learned from this step
+- Small animations can make an interaction feel much more physical
+- Sound alone was not enough for the typewriter illusion
+- Mobile Enter handling needs extra care compared to desktop keyboards
