@@ -674,12 +674,17 @@
                     $remoteUrl.setAttribute('href', url);
 
                     // Generate QR code
-                    const typeNumber = 4;
-                    const errorCorrectionLevel = 'L';
-                    const qr = qrcode(typeNumber, errorCorrectionLevel);
-                    qr.addData(url);
-                    qr.make();
-                    $remoteUrl.innerHTML = qr.createImgTag();
+                    try {
+                        const typeNumber = 0;
+                        const errorCorrectionLevel = 'L';
+                        const qr = qrcode(typeNumber, errorCorrectionLevel);
+                        qr.addData(url);
+                        qr.make();
+                        $remoteUrl.innerHTML = qr.createImgTag();
+                    } catch (err) {
+                        console.error('QR generation failed:', err);
+                        $remoteUrl.textContent = url;
+                    }
                 });
 
                 // Listen for WebRTC signals from remote
