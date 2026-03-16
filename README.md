@@ -289,3 +289,79 @@ const playTypewriterSound = () => {
 - Heart sticker stamps that can be placed on the desktop view
 - QR code for easy phone connection
 - All communication through WebRTC data channels (P2P)
+
+---
+
+## Adding the Moving Typewriter Effect
+
+After getting the bell sound working on Enter, I wanted the typewriter to also **move visually** so it felt more like a real typewriter carriage return.
+
+### Goal
+- When Enter is pressed on the phone, the desktop should not only play the bell sound
+- The typewriter image should move quickly and snap back
+- The paper/letter area should also shift a little to make it feel mechanical
+
+### Problem
+At first, Enter only triggered the bell sound. That meant the interaction worked, but it did not look physical enough.
+
+Another issue was that phone keyboards do not always handle Enter exactly like desktop keyboards, so relying only on `keydown` was not fully reliable.
+
+### Solution
+I kept the existing `__BELL__` signal, but made it do more on the desktop side:
+
+- play the bell sound
+- trigger a carriage-return animation on the typewriter image
+- trigger a small paper movement animation on the text area
+
+I also improved the phone side so Enter can still be detected on mobile by checking line-break input behavior as well.
+
+### Desktop animation idea
+On the desktop page, I added animation classes and keyframes in CSS:
+
+```javascript
+if (message === '__BELL__') {
+    playBellSound();
+    triggerCarriageReturn();
+    return;
+}
+```
+
+Then `triggerCarriageReturn()` removes and re-adds animation classes so the motion can replay every time Enter is pressed.
+
+### Why this helped
+- The app now has both **sound feedback** and **movement feedback**
+- Pressing Enter feels more like using a real typewriter
+- The project became stronger visually, not just technically
+
+### What I learned from this step
+- Small animations can make an interaction feel much more physical
+- Sound alone was not enough for the typewriter illusion
+- Mobile Enter handling needs extra care compared to desktop keyboards
+
+---
+
+## Latest Progress Update (March 2026)
+
+Here is what I improved recently after the sections above:
+
+- Made the heart effect softer with smoother appear/fade animation
+- Hearts now stay visible a bit longer before disappearing
+- Not every key creates a fully different heart now (less random/jumpy feel)
+- Moved the typewriter parts more toward the center so the keys are visible
+- Updated server port handling to `process.env.PORT || 3000` so deployment is easier
+- Checked deployment options and confirmed Render is the easiest full hosting option
+
+This made the project feel more polished visually and also more ready to share with friends online.
+
+## Where I used Copilot help when I got stuck
+
+- Fixing connection/setup issues (socket signaling flow and `targetSocketId` logic)
+- Solving runtime errors (`EADDRINUSE`, missing elements, and callback bracket errors)
+- Debugging remote page issues (`getUrlParameter` order issue)
+- Improving UI behavior (heart animation timing + smoother transitions)
+- Adjusting layout (moving the typewriter up so keys are visible)
+- Deployment readiness (changing server to `process.env.PORT || 3000` and choosing Render)
+
+## Short Summary
+
+I used Copilot mostly for debugging and polishing. When I got stuck, it helped me fix connection errors, improve animations, correct layout problems, and prepare the app for deployment. The app now feels smoother, looks better, and is easier to share.

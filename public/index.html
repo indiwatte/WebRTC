@@ -13,39 +13,201 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            background-color: #FDF8F9;
-            /* Notebook-like square grid (graph paper) */
-            background-image:
-                linear-gradient(to right, rgba(0, 0, 0, 0.06) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(0, 0, 0, 0.06) 1px, transparent 1px);
-            background-size: 36px 36px;
-            background-position: 0 0;
-            -webkit-font-smoothing: antialiased;
+            background-color: black;
+            color: white;
+            overflow: hidden;
         }
 
-        .container {
-            text-align: center;
-            position: relative;
-            display: inline-block;
-            padding-bottom: 220px;
-            /* more space for the larger typewriter image */
-        }
-
-        .qr-section {
+        .intro-screen {
             position: fixed;
-            top: 20px;
-            right: 20px;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            align-items: center;
+            justify-content: center;
+            background: #FDF8F9;
+            z-index: 200;
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.55s ease, visibility 0.55s ease;
+            padding: 24px;
             text-align: center;
         }
 
-        .qr-section p {
-            margin: 5px 0;
+        .intro-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .intro-quote {
+            margin: 0;
+            font-family: "p22-typewriter", sans-serif;
+            font-size: clamp(1.5rem, 2.4vw, 2.25rem);
+            line-height: 1.4;
+            color: #2c2220;
+            max-width: 840px;
+            min-height: 3.2em;
+            padding: 0 12px;
+        }
+
+        .intro-qr-wrap {
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.7s ease, transform 0.7s ease;
+            pointer-events: none;
+        }
+
+        .intro-screen.show-qr .intro-qr-wrap {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .intro-instruction {
+            margin: 0 0 10px;
+            font-family: "p22-typewriter", sans-serif;
+            color: #5f4f4a;
+            font-size: 1rem;
+        }
+
+        .qr-stage {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 190px;
+            min-height: 190px;
+        }
+
+        #remoteUrl {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transform: scale(0.96);
+            transition: opacity 0.35s ease, transform 0.35s ease;
+            transition-delay: 0s;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .qr-stage.envelope-open #remoteUrl {
+            opacity: 1;
+            transform: scale(1);
+            transition-delay: 0.38s;
+            pointer-events: auto;
         }
 
         #remoteUrl img {
             border: 3px solid #333;
             padding: 10px;
-            background-color: pink;
+
+        }
+
+        .qr-envelope {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+            z-index: 2;
+            opacity: 1;
+            cursor: pointer;
+        }
+
+        .qr-envelope-svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.16));
+        }
+
+        .qr-envelope-flap {
+            transform-origin: 50% 100%;
+            transform-box: fill-box;
+        }
+
+        .qr-stage.envelope-open .qr-envelope-flap {
+            animation: envelopeFlapOpen 0.5s ease forwards;
+        }
+
+        .qr-stage.envelope-open .qr-envelope {
+            pointer-events: none;
+            animation: envelopeLowerAway 0.5s 0.48s ease forwards;
+        }
+
+        .type-caret {
+            display: inline-block;
+            width: 2px;
+            height: 1.05em;
+            margin-left: 4px;
+            vertical-align: -0.12em;
+            background: #2c2220;
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0;
+            }
+        }
+
+        .start-screen {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #FDF8F9;
+            z-index: 300;
+            cursor: pointer;
+            opacity: 1;
+            transition: opacity 0.4s ease;
+        }
+
+        .start-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .start-screen-label {
+            font-family: "p22-typewriter", sans-serif;
+            font-size: clamp(1rem, 2vw, 1.4rem);
+            color: #5f4f4a;
+            letter-spacing: 0.08em;
+        }
+
+        .main-ui {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            opacity: 0;
+            transform: translateY(14px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            pointer-events: none;
+        }
+
+        .main-ui.ready {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .container {
+            text-align: center;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: min(96vw, 1100px);
+            padding-bottom: 24px;
+            margin: 0 auto;
+            /* more space for the larger typewriter image */
         }
 
         h1,
@@ -57,93 +219,322 @@
         }
 
         #letterDisplay {
-            width: 380px;
+            width: min(64vw, 360px);
 
-            min-height: 380px;
-            padding: 18px;
-            font-size: 24px;
+            min-height: 200px;
+            padding: 3rem;
+            font-size: 20px;
             font-family: "p22-typewriter", sans-serif;
             border: 2px solid #333;
-
             position: relative;
+            z-index: 10;
 
             background: #ffffff;
+            transition: transform 0.12s ease;
+            transform: translateX(var(--paper-shift, 170px));
+            margin-bottom: -26px;
+
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+            margin-left: auto;
+            margin-right: auto;
         }
 
-        .typewriter-img {
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            bottom: -140px;
-            /* tuck the machine further under the paper */
-            width: 1300px;
-            /* intentionally wider than the paper */
-
-            z-index: 100;
-            pointer-events: none;
+        .typewriter-wrap {
+            position: relative;
+            z-index: 20;
+            width: min(88vw, 920px);
+            height: 700px;
+            align-self: center;
+            margin-top: 0;
+            bottom: -20px;
+            overflow: hidden;
         }
 
-        .heart-stamp,
-        .heart-stamp-svg {
-            position: fixed;
-            width: 100px;
-            height: 100px;
-            pointer-events: none;
-            z-index: 100;
-            animation: stampIn 0.3s ease;
-            will-change: transform, opacity;
-            background: transparent;
-        }
-
-        @keyframes stampIn {
-            0% {
-                transform: scale(0) rotate(-45deg);
-                opacity: 0;
+        @media (min-width: 1024px) {
+            .main-ui {
+                align-items: center;
             }
 
-            50% {
-                transform: scale(1.2) rotate(0deg);
+            .container {
+                min-height: 430px;
+                padding-bottom: 0;
+            }
+
+            .typewriter-wrap {
+                position: absolute;
+                left: 50%;
+                top: 148px;
+                bottom: auto;
+                transform: translateX(-50%);
+                align-self: auto;
+            }
+        }
+
+        .typewriter-carriage.carriage-return {
+            animation: carriageReturn 0.34s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .typewriter-base,
+        .typewriter-carriage {
+            position: absolute;
+            left: 50%;
+            transform-origin: center center;
+            bottom: -8px;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+
+
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .typewriter-base {
+            transform: translateX(-50%) translateY(-10px);
+        }
+
+        .typewriter-carriage {
+            z-index: 10;
+            transform: translateX(calc(-50% + var(--carriage-shift, 170px))) translateY(8px);
+            transition: transform 0.11s linear;
+        }
+
+        .typewriter-carriage.carriage-return {
+            transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .typing-eyes {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 100;
+            overflow: hidden;
+        }
+
+        .typing-heart {
+            position: absolute;
+            font-family: "p22-typewriter", sans-serif;
+            color: #ff3b6b;
+            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+            filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.35));
+            opacity: 0;
+            transform: translateY(12px) scale(0.9) rotate(var(--heart-rotation, 0deg));
+            transition: opacity 0.7s ease, transform 1.6s cubic-bezier(0.22, 1, 0.36, 1);
+            will-change: opacity, transform;
+        }
+
+        .typing-heart.is-active {
+            opacity: 0.9;
+            transform: translateY(0) scale(1) rotate(var(--heart-rotation, 0deg));
+        }
+
+        .typing-heart.is-fading {
+            opacity: 0;
+            transform: translateY(-18px) scale(1.03) rotate(var(--heart-rotation, 0deg));
+            transition: opacity 0.95s ease, transform 1.9s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        @keyframes envelopeFlapOpen {
+            0% {
+                transform: rotateX(0deg);
             }
 
             100% {
-                transform: scale(1) rotate(0deg);
-                opacity: 1;
+                transform: rotateX(-145deg);
+            }
+        }
+
+        @keyframes envelopeLowerAway {
+            0% {
+                transform: translateY(0);
+            }
+
+            100% {
+                transform: translateY(110px);
             }
         }
     </style>
 </head>
 
 <body>
-    <div class="qr-section">
-        <p>Scan to write your letter</p>
-        <p><a href="#" id="remoteUrl">Scan to connect</a></p>
-        <p><button id="enableAudioBtn" style="margin-top:6px">Enable sound</button></p>
+    <div class="start-screen" id="startScreen">
+        <p class="start-screen-label">tap to begin</p>
     </div>
 
-    <div class="container">
-        <h1>Dear you...</h1>
-        <h2>A digital love letter machine</h2>
-        <textarea id="letterDisplay" readonly placeholder="Waiting for connection..."></textarea>
-        <div class="typewriter-wrap">
-            <img class="typewriter-img" src="images/typemachine-draft.png" alt="typewriter">
+    <section class="intro-screen" id="introScreen">
+        <p class="intro-quote" id="introQuote"></p>
+        <div class="intro-qr-wrap" id="introQrWrap">
+            <p class="intro-instruction">Scan to write your letter</p>
+            <div class="qr-stage">
+                <a href="#" id="remoteUrl">Preparing QR code...</a>
+                <div class="qr-envelope" aria-hidden="true">
+                    <svg class="qr-envelope-svg" viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg"
+                        role="presentation">
+                        <rect x="14" y="36" width="212" height="148" rx="8" fill="#FDF8F9" stroke="#5f4f4a"
+                            stroke-width="4" />
+                        <polygon class="qr-envelope-flap" points="14,36 120,112 226,36" fill="#FDF8F9" stroke="#5f4f4a"
+                            stroke-width="4" />
+                        <polygon points="14,184 120,112 14,36" fill="#FDF8F9" stroke="#5f4f4a" stroke-width="4" />
+                        <polygon points="226,184 120,112 226,36" fill="#FDF8F9" stroke="#5f4f4a" stroke-width="4" />
+                        <polygon points="14,184 120,112 226,184" fill="#FDF8F9" stroke="#5f4f4a" stroke-width="4" />
+                    </svg>
+                </div>
+            </div>
         </div>
-        <audio id="typewriterSound" src="audio/typesound.mp3" preload="auto"></audio>
-        <audio id="bellSound" src="audio/bell.mp3" preload="auto"></audio>
+    </section>
+
+    <div class="main-ui" id="mainUi">
+        <div class="container">
+            <h1>Dear you...</h1>
+            <h2>A digital letter note machine</h2>
+            <textarea id="letterDisplay" readonly placeholder="Waiting for connection..."></textarea>
+            <div class="typing-eyes" id="typingEyes" aria-hidden="true"></div>
+            <div class="typewriter-wrap">
+                <img class="typewriter-base" src="images/typewriter-part1.png" alt="typewriter body">
+                <img class="typewriter-carriage" src="images/typewriter-part2.png" alt="typewriter carriage">
+            </div>
+        </div>
     </div>
+    <audio id="sentenceSound" src="audio/sentence.mp3" preload="auto"></audio>
+    <audio id="typewriterSound" src="audio/typesound.mp3" preload="auto"></audio>
+    <audio id="bellSound" src="audio/bell.mp3" preload="auto"></audio>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-peer/9.11.1/simplepeer.min.js"></script>
 
     <script>
         {
-            const $remoteUrl = document.getElementById('remoteUrl');
-            const $letterDisplay = document.getElementById('letterDisplay');
-            const $typewriterSound = document.getElementById('typewriterSound');
-            const $bellSound = document.getElementById('bellSound');
+            const $introScreen = document.querySelector('#introScreen');
+            const $introQuote = document.querySelector('#introQuote');
+            const $introQrWrap = document.querySelector('#introQrWrap');
+            const $mainUi = document.querySelector('#mainUi');
+            const $remoteUrl = document.querySelector('#remoteUrl');
+            const $qrStage = document.querySelector('.qr-stage');
+            const $qrEnvelope = document.querySelector('.qr-envelope');
+            const $letterDisplay = document.querySelector('#letterDisplay');
+            const $sentenceSound = document.querySelector('#sentenceSound');
+            const $typewriterSound = document.querySelector('#typewriterSound');
+            const $bellSound = document.querySelector('#bellSound');
+            const $typewriterCarriage = document.querySelector('.typewriter-carriage');
+            const $startScreen = document.querySelector('#startScreen');
+            const $typingEyes = document.querySelector('#typingEyes');
+            const introText = "Tell your people that you love them";
 
             let socket;
             let peer;
             let lastLength = 0;
+            let introHidden = false;
+            let sentenceSoundStarted = false;
+            let pendingSentenceSound = false;
+            let typingStopTimeout;
+            let lastMessage = '';
+            let activeHeart = null;
+            let lastHeartSpawnAt = 0;
+
+            const CARRIAGE_START_SHIFT = 170;
+            const CARRIAGE_END_SHIFT = -170;
+            const MAX_CHARS_PER_LINE = 30;
+            const HEART_VARIATION_COOLDOWN_MS = 2200;
+            const HEART_HIDE_DELAY_MS = 1800;
+            const HEART_FADE_OUT_MS = 1200;
+
+            const revealMainUI = () => {
+                if (introHidden) {
+                    return;
+                }
+
+                introHidden = true;
+                $introScreen.classList.add('hidden');
+                $mainUi.classList.add('ready');
+            };
+
+            const revealIntroQr = () => {
+                $qrStage.classList.remove('envelope-open');
+                $introScreen.classList.add('show-qr');
+            };
+
+            const openEnvelope = () => {
+                $qrStage.classList.add('envelope-open');
+            };
+
+            const playSentenceSound = () => {
+                if (sentenceSoundStarted) {
+                    return;
+                }
+
+                try {
+                    $sentenceSound.muted = false;
+                    $sentenceSound.volume = 1;
+                    $sentenceSound.currentTime = 0;
+
+                    const playPromise = $sentenceSound.play();
+                    if (playPromise && typeof playPromise.then === 'function') {
+                        playPromise
+                            .then(() => {
+                                sentenceSoundStarted = true;
+                                pendingSentenceSound = false;
+                            })
+                            .catch(err => {
+                                pendingSentenceSound = true;
+                                console.log('Sentence play failed:', err);
+                            });
+                    } else {
+                        sentenceSoundStarted = true;
+                        pendingSentenceSound = false;
+                    }
+                } catch (err) {
+                    pendingSentenceSound = true;
+                    console.error('Error playing sentence:', err);
+                }
+            };
+
+            const stopSentenceSound = () => {
+                try {
+                    $sentenceSound.pause();
+                    $sentenceSound.currentTime = 0;
+                } catch (err) {
+                    console.error('Error stopping sentence sound:', err);
+                }
+            };
+
+            const setupStartScreen = () => {
+                const handleStart = () => {
+                    $startScreen.classList.add('hidden');
+                    playSentenceSound();
+                    setTimeout(startIntroTyping, 2000);
+                };
+
+                $startScreen.addEventListener('pointerdown', handleStart, { once: true });
+            };
+
+            const startIntroTyping = () => {
+                let currentIndex = 0;
+                const minTypeDelay = 170;
+                const maxTypeDelay = 320;
+
+                playSentenceSound();
+
+                const typeNextChar = () => {
+                    if (introHidden) {
+                        return;
+                    }
+
+                    if (currentIndex <= introText.length) {
+                        const visibleText = introText.slice(0, currentIndex);
+                        $introQuote.innerHTML = `${visibleText}<span class="type-caret"></span>`;
+                        currentIndex += 1;
+                        const nextDelay = Math.floor(Math.random() * (maxTypeDelay - minTypeDelay + 1)) + minTypeDelay;
+                        setTimeout(typeNextChar, nextDelay);
+                    } else {
+                        $introQuote.textContent = introText;
+                        stopSentenceSound();
+                        setTimeout(revealIntroQr, 200);
+                    }
+                };
+
+                typeNextChar();
+            };
 
             // Play typewriter sound (clones audio for overlapping sounds)
             const playTypewriterSound = () => {
@@ -165,37 +556,115 @@
                 }
             };
 
-            // Add heart stamp at random position using inline SVG (transparent)
-            const addHeartStamp = () => {
-                const svgns = 'http://www.w3.org/2000/svg';
-                const svg = document.createElementNS(svgns, 'svg');
-                svg.setAttribute('viewBox', '0 0 24 24');
-                svg.setAttribute('xmlns', svgns);
-                svg.setAttribute('class', 'heart-stamp-svg');
+            const triggerCarriageReturn = () => {
+                $typewriterCarriage.classList.remove('carriage-return');
 
-                // Heart path (no background, uses fill color)
-                const path = document.createElementNS(svgns, 'path');
-                path.setAttribute('d', 'M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6 4 4 6.5 4 8.24 4 9.91 5 11 6.09 12.09 5 13.76 4 15.5 4 18 4 20 6 20 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z');
-                path.setAttribute('fill', '#ff3b6b');
+                requestAnimationFrame(() => {
+                    $typewriterCarriage.classList.add('carriage-return');
+                });
 
-                svg.appendChild(path);
+                setCarriageShift(CARRIAGE_START_SHIFT);
 
-                // Random position within viewport
-                const size = 100;
-                const x = Math.random() * (window.innerWidth - size);
-                const y = Math.random() * (window.innerHeight - size);
-                svg.style.left = x + 'px';
-                svg.style.top = y + 'px';
-                svg.style.width = size + 'px';
-                svg.style.height = size + 'px';
+                setTimeout(() => {
+                    $typewriterCarriage.classList.remove('carriage-return');
+                }, 320);
+            };
 
-                const rotation = (Math.random() - 0.5) * 30; // -15 to +15 degrees
-                svg.style.transform = `rotate(${rotation}deg)`;
+            const setCarriageShift = shift => {
+                $typewriterCarriage.style.setProperty('--carriage-shift', `${shift}px`);
+                $letterDisplay.style.setProperty('--paper-shift', `${shift}px`);
+            };
 
-                document.body.appendChild(svg);
+            const getCurrentColumn = message => {
+                const lines = message.split('\n');
+                return lines[lines.length - 1].length;
+            };
+
+            const getLineCount = message => {
+                return message.split('\n').length;
+            };
+
+            const updateCarriageForMessage = message => {
+                const currentColumn = getCurrentColumn(message);
+                const progress = Math.min(currentColumn / MAX_CHARS_PER_LINE, 1);
+                const shift = CARRIAGE_START_SHIFT + (CARRIAGE_END_SHIFT - CARRIAGE_START_SHIFT) * progress;
+                setCarriageShift(shift);
+            };
+
+            const spawnTypingEye = () => {
+                const heart = document.createElement('span');
+                heart.className = 'typing-heart';
+                heart.textContent = '♥';
+
+                const size = Math.floor(Math.random() * 28) + 112;
+                const horizontalMargin = 24;
+                const maxX = Math.max(0, window.innerWidth - size - horizontalMargin);
+                const maxY = Math.max(0, window.innerHeight - size);
+                const sideZoneWidth = Math.max(Math.floor(window.innerWidth * 0.32), size + horizontalMargin);
+
+                const leftZoneMin = horizontalMargin;
+                const leftZoneMax = Math.max(leftZoneMin, Math.min(sideZoneWidth, maxX));
+
+                const rightZoneMin = Math.max(leftZoneMax, window.innerWidth - sideZoneWidth - size - horizontalMargin);
+                const rightZoneMax = Math.max(rightZoneMin, maxX);
+
+                const useLeftSide = Math.random() < 0.5;
+                const x = useLeftSide
+                    ? leftZoneMin + Math.random() * (leftZoneMax - leftZoneMin)
+                    : rightZoneMin + Math.random() * (rightZoneMax - rightZoneMin);
+                const y = Math.random() * maxY;
+                const rotation = (Math.random() - 0.5) * 12;
+
+                heart.style.fontSize = `${size}px`;
+                heart.style.left = `${x}px`;
+                heart.style.top = `${y}px`;
+                heart.style.setProperty('--heart-rotation', `${rotation}deg`);
+
+                return heart;
+            };
+
+            const showTypingEyes = () => {
+                const now = Date.now();
+                const shouldSpawnNewHeart = !activeHeart || (now - lastHeartSpawnAt) > HEART_VARIATION_COOLDOWN_MS;
+
+                if (shouldSpawnNewHeart) {
+                    activeHeart = spawnTypingEye();
+                    lastHeartSpawnAt = now;
+                    $typingEyes.textContent = '';
+                    $typingEyes.appendChild(activeHeart);
+                }
+
+                activeHeart.classList.remove('is-fading');
+                activeHeart.classList.remove('is-active');
+
+                requestAnimationFrame(() => {
+                    if (activeHeart) {
+                        activeHeart.classList.add('is-active');
+                    }
+                });
+
+                clearTimeout(typingStopTimeout);
+                typingStopTimeout = setTimeout(() => {
+                    if (!activeHeart) {
+                        return;
+                    }
+
+                    activeHeart.classList.remove('is-active');
+                    activeHeart.classList.add('is-fading');
+
+                    setTimeout(() => {
+                        if (activeHeart && activeHeart.classList.contains('is-fading')) {
+                            $typingEyes.textContent = '';
+                            activeHeart = null;
+                        }
+                    }, HEART_FADE_OUT_MS);
+                }, HEART_HIDE_DELAY_MS);
             };
 
             const init = () => {
+                setupStartScreen();
+                $qrEnvelope.addEventListener('pointerdown', openEnvelope, { once: true });
+
                 socket = io.connect('/');
                 socket.on('connect', () => {
                     console.log(`Desktop connected: ${socket.id}`);
@@ -217,7 +686,7 @@
                 socket.on('signal', (myId, signal, peerId) => {
                     console.log(`Received signal from ${peerId}`);
 
-                    // If this is an offer, create a peer connection to answer
+                    //create a peer connection to answer
                     if (signal.type === 'offer') {
                         createPeer(false, peerId);
                     }
@@ -250,22 +719,32 @@
                     // Check if it's a bell signal
                     if (message === '__BELL__') {
                         playBellSound();
+                        triggerCarriageReturn();
                         return;
                     }
 
-                    // Check if it's a sticker signal
                     if (message === '__STICKER__') {
-                        addHeartStamp();
                         return;
                     }
 
                     console.log('Received letter data:', message);
 
-                    // Play typewriter sound if text was added (not deleted)
+
                     if (message.length > lastLength) {
                         playTypewriterSound();
                     }
 
+                    const movedToNewLine = getLineCount(message) > getLineCount(lastMessage);
+                    if (movedToNewLine) {
+                        triggerCarriageReturn();
+                    }
+
+                    if (message !== lastMessage) {
+                        showTypingEyes();
+                    }
+                    updateCarriageForMessage(message);
+
+                    lastMessage = message;
                     lastLength = message.length;
                     $letterDisplay.value = message;
                 });
@@ -273,6 +752,8 @@
                 peer.on('connect', () => {
                     console.log('WebRTC connection established!');
                     $letterDisplay.placeholder = 'Start typing on your phone...';
+                    setCarriageShift(CARRIAGE_START_SHIFT);
+                    revealMainUI();
                 });
 
                 peer.on('error', err => {
