@@ -7,48 +7,65 @@
     <title>Typewriter application</title>
     <link rel="stylesheet" href="https://use.typekit.net/njf0vdi.css">
     <style>
+        :root {
+            --bg: #000000;
+            --panel: #000000;
+            --panel-soft: #000000;
+            --text: #ffffff;
+            --muted: #ffffff;
+            --accent: #8fd8ff;
+            --accent-soft: #000000;
+            --line: #8fd8ff;
+            --line-strong: #8fd8ff;
+        }
+
         body {
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: stretch;
             min-height: 100vh;
             margin: 0;
-            padding: 20px;
-            background: linear-gradient(180deg, #f7f1ef 0%, #fef8fa 100%);
-            font-family: "p22-typewriter", sans-serif;
+            padding: 0;
+            background: var(--bg);
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+            color: var(--text);
         }
 
         .container {
             text-align: center;
-            width: 100%;
-            max-width: 500px;
-            color: #2c2220;
-            background: rgba(255, 255, 255, 0.86);
-            border: 2px solid #2c2220;
-            border-radius: 22px;
-            padding: 24px;
-            box-shadow: 0 24px 70px rgba(44, 34, 32, 0.12);
+            width: 100vw;
+            min-height: 100vh;
+            max-width: none;
+            color: var(--text);
+            background: var(--panel);
+            border: none;
+            border-radius: 0;
+            padding: 22px;
+            box-shadow: none;
+            box-sizing: border-box;
         }
 
         h1 {
             margin-bottom: 20px;
-
             font-weight: 400;
             font-style: normal;
+            color: #ffffff;
         }
 
         #status {
             padding: 10px;
             margin-bottom: 20px;
             border-radius: 999px;
-            background: #fff7f9;
-            border: 1px solid #2c2220;
-            font-family: "p22-typewriter", sans-serif;
+            background: #000000;
+            border: none;
+            color: var(--text);
+            font-family: inherit;
         }
 
         #status.connected {
-            background: #d4edda;
-            color: #155724;
+            background: #000000;
+            border: none;
+            color: var(--text);
         }
 
         .ink-color-selector {
@@ -56,15 +73,16 @@
             align-items: center;
             justify-content: center;
             gap: 10px;
-            margin-bottom: 15px;
+            margin-bottom: 0;
+            color: var(--muted);
         }
 
         .color-ball {
             width: 20px;
             height: 20px;
-            background-color: black;
+            background-color: #000000;
             border-radius: 50%;
-            border: 2px solid #333;
+            border: 1px solid var(--line-strong);
         }
 
         .sticker-selector {
@@ -72,12 +90,29 @@
             align-items: center;
             justify-content: center;
             gap: 10px;
-            margin-bottom: 15px;
+            margin-bottom: 0;
+            color: var(--muted);
+        }
+
+        .top-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .top-controls .ink-color-selector,
+        .top-controls .done-bar,
+        .top-controls .sticker-selector {
+            flex: 1;
+            display: flex;
+            justify-content: center;
         }
 
         .heart-icon {
-            width: 100px;
-            height: 100px;
+            width: 70px;
+            height: 70px;
             cursor: pointer;
             transition: transform 0.2s ease;
         }
@@ -88,35 +123,54 @@
 
         .typing-surface {
             margin-top: 10px;
-            border: 2px dashed #2c2220;
-            border-radius: 14px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
             padding: 22px 16px;
-            background: #fff;
+            background: #000000;
             cursor: text;
         }
 
         .typing-surface p {
             margin: 0;
             line-height: 1.5;
+            color: var(--text);
+        }
+
+        .swipe-hint {
+            margin-top: 8px;
+            color: var(--accent);
         }
 
         .line-guide {
             margin-top: 10px;
             min-height: 1.4em;
-            color: #5f4f4a;
+            color: var(--muted);
             font-size: 0.95rem;
             transition: color 0.2s ease;
         }
 
+        .seal-actions {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .seal-message {
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+
         .line-guide.active {
-            color: #8d1a1a;
+            color: var(--accent);
         }
 
         .typing-caret {
             display: inline-block;
             width: 2px;
             height: 1em;
-            background: #2c2220;
+            background: var(--accent);
             vertical-align: -0.15em;
             margin-left: 3px;
             animation: blink 1s step-end infinite;
@@ -137,6 +191,204 @@
                 opacity: 0;
             }
         }
+
+        .motion-bar {
+            margin-top: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            min-height: 32px;
+        }
+
+        .motion-btn {
+            font-family: inherit;
+            font-size: 0.85rem;
+            background: #000000;
+            color: var(--text);
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            padding: 7px 18px;
+            cursor: pointer;
+            transition: opacity 0.15s ease;
+        }
+
+        .done-bar {
+            margin-top: 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        .done-envelope-btn {
+            border: none;
+            background: #000000;
+            padding: 0;
+            cursor: pointer;
+            line-height: 0;
+            transition: transform 0.18s ease, opacity 0.15s ease;
+        }
+
+        .done-envelope-btn img {
+            width: 70px;
+            height: auto;
+            display: block;
+        }
+
+        .done-envelope-btn:active {
+            transform: scale(0.94);
+        }
+
+        .save-letter-btn {
+            margin-top: 0;
+            font-family: inherit;
+            font-size: 0.9rem;
+            background: #000000;
+            color: var(--text);
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            padding: 9px 20px;
+            cursor: pointer;
+        }
+
+        .save-letter-btn:active {
+            transform: scale(0.98);
+        }
+
+        .motion-btn:active {
+            transform: scale(0.98);
+        }
+
+        .motion-status {
+            font-family: inherit;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+
+        .container.carriage-flash {
+            box-shadow: 0 0 0 1px var(--accent);
+            transition: box-shadow 0.1s ease;
+        }
+
+        .paper-playground {
+            margin-top: 16px;
+            position: relative;
+            height: 180px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background: #000000;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        .paper-sheet {
+            position: absolute;
+            width: 110px;
+            height: 140px;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            border: none;
+            border-radius: 8px;
+            background: #000000;
+            box-shadow: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text);
+            user-select: none;
+            cursor: grab;
+            font-size: 0.92rem;
+            transition: box-shadow 0.18s ease;
+            z-index: 2;
+            overflow: hidden;
+        }
+
+        .paper-sheet::before {
+            content: none;
+        }
+
+        .paper-sheet::after {
+            content: none;
+        }
+
+        .paper-label {
+            position: relative;
+            z-index: 2;
+            transition: opacity 0.18s ease;
+        }
+
+        .paper-sheet.dragging {
+            cursor: grabbing;
+            box-shadow: none;
+        }
+
+        .paper-sheet.crumpling {
+            animation: none;
+            pointer-events: none;
+        }
+
+        .paper-sheet.crumpling::before,
+        .paper-sheet.crumpling .paper-label {
+            opacity: 0;
+        }
+
+        .paper-sheet.crumpling::after {
+            opacity: 0;
+            transform: none;
+        }
+
+        @keyframes paperCrumple {
+            0% {
+                transform: translate(var(--paper-x, -50%), var(--paper-y, -50%)) scale(1) rotate(0deg);
+                border-radius: 8px;
+                opacity: 1;
+            }
+
+            35% {
+                transform: translate(var(--paper-x, -50%), var(--paper-y, -50%)) scale(0.86, 1.06) rotate(-8deg);
+                border-radius: 28px 18px 34px 22px;
+            }
+
+            72% {
+                transform: translate(var(--paper-x, -50%), var(--paper-y, -50%)) scale(0.62) rotate(14deg);
+                border-radius: 46% 38% 42% 40%;
+            }
+
+            100% {
+                transform: translate(var(--paper-x, -50%), var(--paper-y, -50%)) scale(0.22) rotate(30deg);
+                border-radius: 50%;
+                opacity: 0;
+            }
+        }
+
+        .trash-bin {
+            position: absolute;
+            right: 12px;
+            bottom: 10px;
+            width: 54px;
+            height: 54px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background: #000000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+            z-index: 1;
+        }
+
+        .trash-bin.active {
+            transform: scale(1.08);
+            background: #000000;
+            box-shadow: none;
+        }
+
+        .paper-hint {
+            margin-top: 8px;
+            color: var(--muted);
+            font-size: 0.82rem;
+        }
     </style>
 </head>
 
@@ -144,25 +396,48 @@
     <div class="container">
         <h1>Type your letter here</h1>
         <div id="status">Connecting...</div>
-        <div class="ink-color-selector">
-            <div>ink color</div>
-            <div class="color-ball"></div>
+        <div class="seal-actions" id="sealActions" hidden>
+            <span class="seal-message">Your letter is sealed and stamped.</span>
+            <button class="save-letter-btn" id="saveLetterBtn" type="button" hidden>Save my letter</button>
         </div>
-        <div class="sticker-selector">
-            <div>sticker</div>
-            <img src="images/heart.png" alt="heart" class="heart-icon">
+        <div class="top-controls">
+            <div class="ink-color-selector">
+                <div>ink color</div>
+                <div class="color-ball"></div>
+            </div>
+            <div class="done-bar">
+                <div>stamp</div>
+                <button class="done-envelope-btn" id="doneBtn" aria-label="Done">
+                    <img src="images/stamp.png" alt="Done">
+                </button>
+            </div>
+            <div class="sticker-selector">
+                <div>sticker</div>
+                <img src="images/heart.png" alt="heart" class="heart-icon">
+            </div>
         </div>
+        <div class="paper-playground" id="paperPlayground">
+            <div class="paper-sheet" id="paperSheet" role="button" tabindex="0"
+                aria-label="Drag this paper to the trash"><span class="paper-label">empty paper</span></div>
+            <div class="trash-bin" id="trashBin" aria-hidden="true">🗑️</div>
+        </div>
+        <div class="paper-hint">Drag the paper to the trash to restart.</div>
         <div class="typing-surface" id="typingSurface" role="button" tabindex="0" aria-label="Tap here to type">
-            <p>Tap here and start typing on your keyboard.</p>
-            <p>Your text appears only on the desktop screen.<span class="typing-caret"></span></p>
+            <p>Start typing here..</p>
+            <p class="swipe-hint">Swipe left ←<span class="typing-caret"></span></p>
         </div>
-        <div class="line-guide" id="lineGuide">Swipe the carriage area to start a new line.</div>
+        <div class="line-guide" id="lineGuide">Swipe left or flick phone left to return carriage.</div>
+        <div class="motion-bar" id="motionBar">
+            <button class="motion-btn" id="motionBtn">Enable motion sensor</button>
+            <span class="motion-status" id="motionStatus"></span>
+        </div>
         <textarea id="letterInput" autocomplete="off" autocorrect="off" autocapitalize="on"
             spellcheck="false"></textarea>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-peer/9.11.1/simplepeer.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <script>
         {
@@ -170,6 +445,12 @@
             const $status = document.getElementById('status');
             const $typingSurface = document.getElementById('typingSurface');
             const $lineGuide = document.getElementById('lineGuide');
+            const $paperSheet = document.getElementById('paperSheet');
+            const $trashBin = document.getElementById('trashBin');
+            const $doneBtn = document.getElementById('doneBtn');
+            const $sealActions = document.getElementById('sealActions');
+            const $sealMessage = document.querySelector('.seal-message');
+            const $saveLetterBtn = document.getElementById('saveLetterBtn');
 
             let socket;
             let peer;
@@ -179,10 +460,21 @@
             let swipeStartX = 0;
             let swipeStartY = 0;
             let lineGuideTimeout;
+            let lastMotionTrigger = 0;
+            let motionSensor;
+            let dragStartX = 0;
+            let dragStartY = 0;
+            let dragOffsetX = 0;
+            let dragOffsetY = 0;
+            let isPaperDragging = false;
+            let crumpleTimeout;
+            let isLetterSealed = false;
 
             const MAX_CHARS_PER_LINE = 30;
             const SWIPE_THRESHOLD = 55;
             const SWIPE_VERTICAL_TOLERANCE = 45;
+            const MOTION_THRESHOLD = 15;   // m/s² - leftward flick
+            const MOTION_DEBOUNCE_MS = 800;
 
             // Get target socket ID from URL parameter
             const getUrlParameter = name => {
@@ -247,11 +539,251 @@
 
                 if (isActive) {
                     lineGuideTimeout = setTimeout(() => {
-                        $lineGuide.textContent = 'Swipe the carriage area to start a new line.';
+                        $lineGuide.textContent = 'Swipe left to start a new line.';
                         $lineGuide.classList.remove('active');
                     }, 1800);
                 }
             };
+
+            const setSaveButtonVisible = isVisible => {
+                $saveLetterBtn.hidden = !isVisible;
+                $sealActions.hidden = !isVisible;
+                if (isVisible) {
+                    $sealMessage.textContent = 'Your letter is sealed and stamped.';
+                }
+            };
+
+            const createLetterPdfBlob = (letterContent) => {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+                const margin = 52;
+                const pageWidth = doc.internal.pageSize.getWidth();
+                const pageHeight = doc.internal.pageSize.getHeight();
+                const maxTextWidth = pageWidth - margin * 2;
+                const lineHeight = 20;
+                const maxContentHeight = pageHeight - margin * 2;
+                const maxLinesPerPage = Math.max(1, Math.floor(maxContentHeight / lineHeight));
+
+                doc.setFont('courier', 'normal');
+                doc.setFontSize(14);
+                doc.text('Dear you...', margin, margin);
+
+                const normalizedContent = letterContent.replace(/\r\n/g, '\n').trimEnd();
+                const letterLines = normalizedContent.length
+                    ? doc.splitTextToSize(normalizedContent, maxTextWidth)
+                    : ['(empty letter)'];
+
+                let cursorY = margin + 34;
+
+                for (let i = 0; i < letterLines.length; i += 1) {
+                    if ((i > 0 && i % maxLinesPerPage === 0) || cursorY > pageHeight - margin) {
+                        doc.addPage();
+                        cursorY = margin;
+                    }
+
+                    doc.text(letterLines[i], margin, cursorY);
+                    cursorY += lineHeight;
+                }
+
+                return doc.output('blob');
+            };
+
+            const timestampForFileName = () => {
+                const now = new Date();
+                const pad = value => String(value).padStart(2, '0');
+                return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}`;
+            };
+
+            const downloadBlob = (blob, fileName) => {
+                const url = URL.createObjectURL(blob);
+                const anchor = document.createElement('a');
+                anchor.href = url;
+                anchor.download = fileName;
+                document.body.appendChild(anchor);
+                anchor.click();
+                anchor.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 0);
+            };
+
+            const $motionBtn = document.getElementById('motionBtn');
+            const $motionStatus = document.getElementById('motionStatus');
+            const $container = document.querySelector('.container');
+
+            const resetPaperPosition = () => {
+                $paperSheet.style.removeProperty('--paper-x');
+                $paperSheet.style.removeProperty('--paper-y');
+                $paperSheet.style.transform = 'translate(-50%, -50%)';
+                $paperSheet.classList.remove('dragging');
+                $trashBin.classList.remove('active');
+            };
+
+            const updatePaperTransform = () => {
+                $paperSheet.style.setProperty('--paper-x', `${dragOffsetX - 50}%`);
+                $paperSheet.style.setProperty('--paper-y', `${dragOffsetY - 50}%`);
+                $paperSheet.style.transform = `translate(${dragOffsetX - 50}%, ${dragOffsetY - 50}%)`;
+            };
+
+            const isPaperOverTrash = () => {
+                const paperRect = $paperSheet.getBoundingClientRect();
+                const trashRect = $trashBin.getBoundingClientRect();
+
+                return !(
+                    paperRect.right < trashRect.left ||
+                    paperRect.left > trashRect.right ||
+                    paperRect.bottom < trashRect.top ||
+                    paperRect.top > trashRect.bottom
+                );
+            };
+
+            const replaceWithNewPaper = () => {
+                $letterInput.value = '';
+                lastSentValue = '';
+                isLetterSealed = false;
+                setSaveButtonVisible(false);
+
+                if (peer && peer.connected) {
+                    peer.send('__CRUMPLE__');
+                    peer.send('');
+                }
+
+                showLineGuide('New empty paper ready.', false);
+                clearTimeout(crumpleTimeout);
+                crumpleTimeout = setTimeout(() => {
+                    $paperSheet.classList.remove('crumpling');
+                    $paperSheet.style.opacity = '';
+                    resetPaperPosition();
+                }, 0);
+            };
+
+            const crumplePaper = () => {
+                $paperSheet.classList.remove('dragging');
+                $trashBin.classList.remove('active');
+                $paperSheet.classList.add('crumpling');
+                replaceWithNewPaper();
+            };
+
+            const startPaperDrag = (event) => {
+                if ($paperSheet.classList.contains('crumpling')) return;
+                isPaperDragging = true;
+                dragStartX = event.clientX;
+                dragStartY = event.clientY;
+                dragOffsetX = 50;
+                dragOffsetY = 50;
+                $paperSheet.classList.add('dragging');
+                $paperSheet.setPointerCapture(event.pointerId);
+            };
+
+            const movePaperDrag = (event) => {
+                if (!isPaperDragging) return;
+
+                const dx = event.clientX - dragStartX;
+                const dy = event.clientY - dragStartY;
+                const zoneWidth = $container.clientWidth;
+                const zoneHeight = 180;
+
+                dragOffsetX = Math.max(5, Math.min(95, 50 + (dx / zoneWidth) * 100));
+                dragOffsetY = Math.max(8, Math.min(92, 50 + (dy / zoneHeight) * 100));
+                updatePaperTransform();
+                $trashBin.classList.toggle('active', isPaperOverTrash());
+            };
+
+            const endPaperDrag = (event) => {
+                if (!isPaperDragging) return;
+                isPaperDragging = false;
+                $paperSheet.releasePointerCapture(event.pointerId);
+
+                if (isPaperOverTrash()) {
+                    crumplePaper();
+                    return;
+                }
+
+                resetPaperPosition();
+            };
+
+            const flashContainer = () => {
+                $container.classList.add('carriage-flash');
+                setTimeout(() => $container.classList.remove('carriage-flash'), 350);
+            };
+
+            const triggerMotionFromX = (xAxisAcceleration) => {
+                if (xAxisAcceleration === null || xAxisAcceleration === undefined) return;
+                const now = Date.now();
+                if (now - lastMotionTrigger < MOTION_DEBOUNCE_MS) return;
+
+                // Negative x = leftward flick in portrait mode
+                if (xAxisAcceleration < -MOTION_THRESHOLD) {
+                    lastMotionTrigger = now;
+                    triggerCarriageReturn();
+                    flashContainer();
+                }
+            };
+
+            const handleDeviceMotion = (event) => {
+                const acc = event.acceleration || event.accelerationIncludingGravity;
+                if (!acc) return;
+                triggerMotionFromX(acc.x);
+            };
+
+            const startAccelerometer = () => {
+                if (!('Accelerometer' in window)) {
+                    return false;
+                }
+
+                try {
+                    const acl = new Accelerometer({ frequency: 60 });
+
+                    acl.addEventListener('reading', () => {
+                        triggerMotionFromX(acl.x);
+                    });
+
+                    acl.addEventListener('error', (event) => {
+                        console.error('Accelerometer error:', event.error);
+                        $motionStatus.textContent = 'accelerometer error';
+                    });
+
+                    acl.start();
+                    motionSensor = acl;
+                    $motionBtn.style.display = 'none';
+                    $motionStatus.textContent = '✦ accelerometer active';
+                    return true;
+                } catch (err) {
+                    console.error('Accelerometer start failed:', err);
+                    return false;
+                }
+            };
+
+            const enableMotion = async () => {
+                if (motionSensor) return;
+
+                if (startAccelerometer()) {
+                    return;
+                }
+
+                if (typeof DeviceMotionEvent !== 'undefined' &&
+                    typeof DeviceMotionEvent.requestPermission === 'function') {
+                    // iOS 13+ needs explicit permission
+                    try {
+                        const permission = await DeviceMotionEvent.requestPermission();
+                        if (permission === 'granted') {
+                            window.addEventListener('devicemotion', handleDeviceMotion);
+                            $motionBtn.style.display = 'none';
+                            $motionStatus.textContent = '✦ motion active (fallback)';
+                        } else {
+                            $motionStatus.textContent = 'permission denied';
+                        }
+                    } catch (err) {
+                        console.error('Motion permission error:', err);
+                        $motionStatus.textContent = 'not supported';
+                    }
+                } else {
+                    // Android and other browsers — no permission needed
+                    window.addEventListener('devicemotion', handleDeviceMotion);
+                    $motionBtn.style.display = 'none';
+                    $motionStatus.textContent = '✦ motion active (fallback)';
+                }
+            };
+
+            $motionBtn.addEventListener('click', enableMotion);
 
             const triggerCarriageReturn = () => {
                 if ($letterInput.value.length === 0 || $letterInput.value.endsWith('\n')) {
@@ -302,12 +834,17 @@
 
             // Send letter content on every keystroke through data channel
             $letterInput.addEventListener('input', (e) => {
+                if (isLetterSealed) {
+                    isLetterSealed = false;
+                    setSaveButtonVisible(false);
+                }
+
                 if (peer && peer.connected) {
                     const letterContent = e.target.value;
 
                     if (exceedsLineLimit(letterContent)) {
                         e.target.value = lastSentValue;
-                        showLineGuide('Line full. Swipe the carriage to start a new line.');
+                        showLineGuide('Line full. Swipe left to start a new line.');
                         return;
                     }
 
@@ -323,7 +860,7 @@
                     skipNextInputBell = false;
 
                     if (getCurrentLineLength(letterContent) === MAX_CHARS_PER_LINE) {
-                        showLineGuide('Line full. Swipe the carriage to start a new line.');
+                        showLineGuide('Line full. Swipe left to start a new line.');
                     }
                 } else {
                     console.log('Peer not connected yet');
@@ -343,7 +880,7 @@
 
                 if (lineIsFull && isCharacterInsertionKey(e)) {
                     e.preventDefault();
-                    showLineGuide('Line full. Swipe the carriage to start a new line.');
+                    showLineGuide('Line full. Swipe left to start a new line.');
                     return;
                 }
             });
@@ -358,28 +895,88 @@
                 }
             });
 
-            $typingSurface.addEventListener('click', focusHiddenInput);
-            $typingSurface.addEventListener('touchstart', focusHiddenInput, { passive: true });
-            $typingSurface.addEventListener('touchstart', (e) => {
-                if (!e.touches || e.touches.length === 0) {
+            $doneBtn.addEventListener('click', () => {
+                const letterContent = $letterInput.value || '';
+                if (!letterContent.trim()) {
+                    showLineGuide('Write your letter before sealing it.', true);
                     return;
                 }
 
+                if (peer && peer.connected) {
+                    peer.send('__DONE__');
+                } else {
+                    console.log('Peer not connected yet');
+                }
+
+                isLetterSealed = true;
+                setSaveButtonVisible(true);
+                showLineGuide('Letter sealed.', false);
+            });
+
+            $saveLetterBtn.addEventListener('click', () => {
+                const letterContent = $letterInput.value || '';
+                if (!letterContent.trim()) {
+                    showLineGuide('No letter text to save yet.', true);
+                    return;
+                }
+
+                const fileName = `letter-${timestampForFileName()}.pdf`;
+                const pdfBlob = createLetterPdfBlob(letterContent);
+                downloadBlob(pdfBlob, fileName);
+
+                $saveLetterBtn.hidden = true;
+                $sealActions.hidden = false;
+                $sealMessage.textContent = 'PDF saved to your device.';
+
+                showLineGuide('PDF saved to your device.', false);
+            });
+
+            $typingSurface.addEventListener('click', focusHiddenInput);
+            $typingSurface.addEventListener('touchstart', focusHiddenInput, { passive: true });
+
+            $paperSheet.addEventListener('pointerdown', (event) => {
+                event.preventDefault();
+                startPaperDrag(event);
+            });
+
+            $paperSheet.addEventListener('pointermove', (event) => {
+                if (!isPaperDragging) return;
+                event.preventDefault();
+                movePaperDrag(event);
+            });
+
+            $paperSheet.addEventListener('pointerup', endPaperDrag);
+            $paperSheet.addEventListener('pointercancel', () => {
+                if (!isPaperDragging) return;
+                isPaperDragging = false;
+                resetPaperPosition();
+            });
+
+            $paperSheet.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    crumplePaper();
+                }
+            });
+
+            // Full-screen swipe detection (not just the typing surface)
+            document.addEventListener('touchstart', (e) => {
+                if (!e.touches || e.touches.length === 0) return;
                 swipeStartX = e.touches[0].clientX;
                 swipeStartY = e.touches[0].clientY;
             }, { passive: true });
 
-            $typingSurface.addEventListener('touchend', (e) => {
-                if (!e.changedTouches || e.changedTouches.length === 0) {
-                    return;
-                }
+            document.addEventListener('touchend', (e) => {
+                if (!e.changedTouches || e.changedTouches.length === 0) return;
 
                 const touch = e.changedTouches[0];
                 const deltaX = touch.clientX - swipeStartX;
                 const deltaY = Math.abs(touch.clientY - swipeStartY);
 
-                if (Math.abs(deltaX) >= SWIPE_THRESHOLD && deltaY <= SWIPE_VERTICAL_TOLERANCE) {
+                // Only trigger on leftward swipe
+                if (deltaX <= -SWIPE_THRESHOLD && deltaY <= SWIPE_VERTICAL_TOLERANCE) {
                     triggerCarriageReturn();
+                    flashContainer();
                 }
             }, { passive: true });
             $typingSurface.addEventListener('keydown', (e) => {
