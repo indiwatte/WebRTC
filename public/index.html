@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Typewriter application</title>
     <link rel="stylesheet" href="https://use.typekit.net/njf0vdi.css">
+
     <style>
         body {
             display: flex;
@@ -185,7 +186,8 @@
             width: 100%;
             display: flex;
             justify-content: center;
-            align-items: flex-end;
+            align-items: flex-start;
+            padding-top: 24px;
             opacity: 0;
             transform: translateY(14px);
             transition: opacity 0.5s ease, transform 0.5s ease;
@@ -218,8 +220,25 @@
             font-style: normal;
         }
 
-        #letterDisplay {
+        h1,
+        h2 {
+            font-family: "mayence-premium", sans-serif;
+            font-weight: 400;
+            font-style: normal;
+            font-size: clamp(1.8rem, 3.2vw, 2.8rem);
+        }
+
+        .paper-stack {
             width: min(64vw, 360px);
+            position: relative;
+            z-index: 10;
+            margin-bottom: -26px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        #letterDisplay {
+            width: 100%;
 
             min-height: 200px;
             padding: 3rem;
@@ -227,16 +246,146 @@
             font-family: "p22-typewriter", sans-serif;
             border: 2px solid #333;
             position: relative;
-            z-index: 10;
+            z-index: 1;
 
             background: #ffffff;
             transition: transform 0.12s ease;
             transform: translateX(var(--paper-shift, 170px));
-            margin-bottom: -26px;
 
             box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
-            margin-left: auto;
-            margin-right: auto;
+        }
+
+        #letterSealFlap {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform-origin: center;
+            transform: translateY(14px) scale(0.92);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        #letterStamp {
+            position: absolute;
+            width: min(40%, 150px);
+            right: 25%;
+            top: 35%;
+            opacity: 0;
+            transform: translate(-20px, -120px) scale(4.6) rotate(-22deg);
+            transform-origin: center;
+            pointer-events: none;
+            z-index: 4;
+        }
+
+        #paperCrumpleFx {
+            position: absolute;
+            inset: 0;
+            background: url("images/crumbled%20paper.png") center/cover no-repeat;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateX(var(--paper-shift, 170px)) scale(0.7) rotate(0deg);
+            transform-origin: 75% 80%;
+            z-index: 3;
+            filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.2));
+        }
+
+        .paper-stack.paper-crumple-active #letterDisplay {
+            animation: desktopPaperVanish 0.32s ease forwards;
+        }
+
+        .paper-stack.paper-crumple-active #paperCrumpleFx {
+            animation: desktopPaperCrumple 0.72s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        .paper-stack.letter-sealed #letterDisplay {
+            animation: desktopLetterFade 0.28s ease forwards;
+        }
+
+        .paper-stack.letter-sealed #letterSealFlap {
+            animation: desktopLetterClose 0.45s cubic-bezier(0.2, 0.9, 0.35, 1) forwards;
+        }
+
+        .paper-stack.letter-sealed #letterStamp {
+            animation: desktopStampDrop 0.52s 0.2s cubic-bezier(0.12, 0.92, 0.22, 1.2) forwards;
+        }
+
+        @keyframes desktopLetterFade {
+            0% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes desktopLetterClose {
+            0% {
+                transform: translateY(14px) scale(0.92);
+                opacity: 0;
+            }
+
+            100% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes desktopStampDrop {
+            0% {
+                opacity: 0;
+                transform: translate(-20px, -120px) scale(4.6) rotate(-22deg);
+            }
+
+            42% {
+                opacity: 1;
+                transform: translate(3px, 6px) scale(0.84) rotate(-3deg);
+            }
+
+            74% {
+                opacity: 1;
+                transform: translate(-2px, -1px) scale(1.08) rotate(-9deg);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translate(0, 0) scale(1) rotate(-7deg);
+            }
+        }
+
+        @keyframes desktopPaperVanish {
+            0% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes desktopPaperCrumple {
+            0% {
+                opacity: 0;
+                transform: translateX(var(--paper-shift, 170px)) scale(0.72) rotate(0deg);
+            }
+
+            28% {
+                opacity: 1;
+                transform: translateX(var(--paper-shift, 170px)) scale(1) rotate(-4deg);
+            }
+
+            68% {
+                opacity: 1;
+                transform: translateX(calc(var(--paper-shift, 170px) + 10px)) scale(0.8) rotate(10deg);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translateX(calc(var(--paper-shift, 170px) + 18px)) scale(0.25) rotate(24deg);
+            }
         }
 
         .typewriter-wrap {
@@ -248,11 +397,17 @@
             margin-top: 0;
             bottom: -20px;
             overflow: hidden;
+            transition: opacity 0.22s ease;
+        }
+
+        .typewriter-wrap.typewriter-hidden-temp {
+            opacity: 0;
         }
 
         @media (min-width: 1024px) {
             .main-ui {
-                align-items: center;
+                align-items: flex-start;
+                padding-top: 18px;
             }
 
             .container {
@@ -279,7 +434,7 @@
             position: absolute;
             left: 50%;
             transform-origin: center center;
-            bottom: -8px;
+            bottom: -55px;
             width: 100%;
             height: 100%;
             object-fit: contain;
@@ -387,7 +542,12 @@
         <div class="container">
             <h1>Dear you...</h1>
             <h2>A digital letter note machine</h2>
-            <textarea id="letterDisplay" readonly placeholder="Waiting for connection..."></textarea>
+            <div class="paper-stack" id="paperStack">
+                <textarea id="letterDisplay" readonly placeholder="Waiting for connection..."></textarea>
+                <img id="letterSealFlap" src="images/enveloppe.png" alt="" aria-hidden="true">
+                <img id="letterStamp" src="images/stamp.png" alt="" aria-hidden="true">
+                <div id="paperCrumpleFx" aria-hidden="true"></div>
+            </div>
             <div class="typing-eyes" id="typingEyes" aria-hidden="true"></div>
             <div class="typewriter-wrap">
                 <img class="typewriter-base" src="images/typewriter-part1.png" alt="typewriter body">
@@ -398,6 +558,7 @@
     <audio id="sentenceSound" src="audio/sentence.mp3" preload="auto"></audio>
     <audio id="typewriterSound" src="audio/typesound.mp3" preload="auto"></audio>
     <audio id="bellSound" src="audio/bell.mp3" preload="auto"></audio>
+    <audio id="crumpleSound" src="audio/crumlingpaper.mp3" preload="auto"></audio>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
@@ -416,7 +577,11 @@
             const $sentenceSound = document.querySelector('#sentenceSound');
             const $typewriterSound = document.querySelector('#typewriterSound');
             const $bellSound = document.querySelector('#bellSound');
+            const $crumpleSound = document.querySelector('#crumpleSound');
             const $typewriterCarriage = document.querySelector('.typewriter-carriage');
+            const $typewriterWrap = document.querySelector('.typewriter-wrap');
+            const $paperStack = document.querySelector('#paperStack');
+            const $paperCrumpleFx = document.querySelector('#paperCrumpleFx');
             const $startScreen = document.querySelector('#startScreen');
             const $typingEyes = document.querySelector('#typingEyes');
             const introText = "Tell your people that you love them";
@@ -431,6 +596,9 @@
             let lastMessage = '';
             let activeHeart = null;
             let lastHeartSpawnAt = 0;
+            let crumpleResetTimeout;
+            let isDesktopCrumpling = false;
+            let isLetterSealed = false;
 
             const CARRIAGE_START_SHIFT = 170;
             const CARRIAGE_END_SHIFT = -170;
@@ -556,6 +724,15 @@
                 }
             };
 
+            const playCrumpleSound = () => {
+                try {
+                    const sound = $crumpleSound.cloneNode();
+                    sound.play().catch(err => console.log('Crumple play failed:', err));
+                } catch (err) {
+                    console.error('Error playing crumple:', err);
+                }
+            };
+
             const triggerCarriageReturn = () => {
                 $typewriterCarriage.classList.remove('carriage-return');
 
@@ -573,6 +750,7 @@
             const setCarriageShift = shift => {
                 $typewriterCarriage.style.setProperty('--carriage-shift', `${shift}px`);
                 $letterDisplay.style.setProperty('--paper-shift', `${shift}px`);
+                $paperCrumpleFx.style.setProperty('--paper-shift', `${shift}px`);
             };
 
             const getCurrentColumn = message => {
@@ -589,6 +767,56 @@
                 const progress = Math.min(currentColumn / MAX_CHARS_PER_LINE, 1);
                 const shift = CARRIAGE_START_SHIFT + (CARRIAGE_END_SHIFT - CARRIAGE_START_SHIFT) * progress;
                 setCarriageShift(shift);
+            };
+
+            const triggerDesktopCrumple = () => {
+                $paperStack.classList.remove('letter-sealed');
+                isLetterSealed = false;
+                isDesktopCrumpling = true;
+                playCrumpleSound();
+                $paperStack.classList.remove('paper-crumple-active');
+
+                requestAnimationFrame(() => {
+                    $paperStack.classList.add('paper-crumple-active');
+                });
+
+                clearTimeout(crumpleResetTimeout);
+                crumpleResetTimeout = setTimeout(() => {
+                    $paperStack.classList.remove('paper-crumple-active');
+                    $letterDisplay.value = '';
+                    $letterDisplay.style.opacity = '';
+                    lastMessage = '';
+                    lastLength = 0;
+                    isDesktopCrumpling = false;
+                    $typewriterWrap.classList.remove('typewriter-hidden-temp');
+                    setCarriageShift(CARRIAGE_START_SHIFT);
+                }, 760);
+            };
+
+            const hideTypewriter = () => {
+                $typewriterWrap.classList.add('typewriter-hidden-temp');
+            };
+
+            const triggerLetterSeal = () => {
+                if (isDesktopCrumpling) {
+                    return;
+                }
+
+                isLetterSealed = true;
+                $paperStack.classList.remove('letter-sealed');
+
+                requestAnimationFrame(() => {
+                    $paperStack.classList.add('letter-sealed');
+                });
+            };
+
+            const clearLetterSeal = () => {
+                if (!isLetterSealed && !$paperStack.classList.contains('letter-sealed')) {
+                    return;
+                }
+
+                isLetterSealed = false;
+                $paperStack.classList.remove('letter-sealed');
             };
 
             const spawnTypingEye = () => {
@@ -728,8 +956,32 @@
                         return;
                     }
 
+                    if (message === '__CRUMPLE__') {
+                        triggerDesktopCrumple();
+                        return;
+                    }
+
                     if (message === '__STICKER__') {
                         return;
+                    }
+
+                    if (message === '__DONE__') {
+                        const hasLetterContent = (lastMessage || $letterDisplay.value || '').trim().length > 0;
+                        if (!hasLetterContent) {
+                            return;
+                        }
+
+                        hideTypewriter();
+                        triggerLetterSeal();
+                        return;
+                    }
+
+                    if (isDesktopCrumpling && message === '') {
+                        return;
+                    }
+
+                    if (isLetterSealed && message !== lastMessage) {
+                        clearLetterSeal();
                     }
 
                     console.log('Received letter data:', message);
