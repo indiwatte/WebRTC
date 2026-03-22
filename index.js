@@ -16,7 +16,7 @@ const clients = {};
 io.on('connection', (socket) => {
     console.log('A user connected:');
 
-    clients[socket.id] = { //wenever the property connects to the server, we will add the socket id to the clients object
+    clients[socket.id] = { //wenever the property connects to the server, this will add the socket id to the clients object
         id: socket.id,
     };
 
