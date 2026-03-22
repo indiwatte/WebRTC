@@ -17,17 +17,17 @@
     const $paperCrumpleFx = document.querySelector('#paperCrumpleFx');
     const $startScreen = document.querySelector('#startScreen');
     const $typingEyes = document.querySelector('#typingEyes');
+    const $skipIntroBtn = document.querySelector('#skipIntroBtn');
     const introText = "Tell your people that you love them";
 
     let socket;
     let peer;
     let lastLength = 0;
     let introHidden = false;
+    let introSkipped = false;
     let sentenceSoundStarted = false;
     let pendingSentenceSound = false;
-    let typingStopTimeout;
     let lastMessage = '';
-    let activeHeart = null;
     let lastHeartSpawnAt = 0;
     let crumpleResetTimeout;
     let isDesktopCrumpling = false;
@@ -36,9 +36,9 @@
     const CARRIAGE_START_SHIFT = 170;
     const CARRIAGE_END_SHIFT = -170;
     const MAX_CHARS_PER_LINE = 30;
-    const HEART_VARIATION_COOLDOWN_MS = 2200;
-    const HEART_HIDE_DELAY_MS = 1800;
-    const HEART_FADE_OUT_MS = 1200;
+    const HEART_VARIATION_COOLDOWN_MS = 400; // Much faster spawn rate for "sprinkle" effect
+    const HEART_HIDE_DELAY_MS = 2200; // Stay longer
+    const HEART_FADE_OUT_MS = 1500; // Slower fade out
 
     const revealMainUI = () => {
         if (introHidden) {
@@ -117,7 +117,7 @@
         playSentenceSound();
 
         const typeNextChar = () => {
-            if (introHidden) {
+            if (introHidden || introSkipped) {
                 return;
             }
 
@@ -135,6 +135,15 @@
         };
 
         typeNextChar();
+    };
+
+    const setupSkipButton = () => {
+        $skipIntroBtn.addEventListener('click', () => {
+            introSkipped = true;
+            $introQuote.textContent = introText;
+            stopSentenceSound();
+            revealIntroQr();
+        });
     };
 
     const playTypewriterSound = () => {
@@ -251,14 +260,20 @@
     };
 
     const spawnTypingEye = () => {
-        const heart = document.createElement('span');
-        heart.className = 'typing-heart';
-        heart.textContent = '♥';
+        const heartContainer = document.createElement('div');
+        heartContainer.className = 'typing-heart';
 
-        const size = Math.floor(Math.random() * 28) + 112;
-        const horizontalMargin = 24;
+        heartContainer.innerHTML = `
+            <svg viewBox="-2 -2 36 33.6" xmlns="http://www.w3.org/2000/svg">
+                <path d="M23.6,0c-3.4,0-6.3,2.7-7.6,5.6C14.7,2.7,11.8,0,8.4,0C3.8,0,0,3.8,0,8.4c0,9.4,9.5,11.9,16,21.2
+                c6.1-9.3,16-12.1,16-21.2C32,3.8,28.2,0,23.6,0z"/>
+            </svg>
+        `;
+
+        const size = Math.floor(Math.random() * 40) + 80; // Slightly smaller size
+        const horizontalMargin = 40; // Increased margin from edges
         const maxX = Math.max(0, window.innerWidth - size - horizontalMargin);
-        const maxY = Math.max(0, window.innerHeight - size);
+        const maxY = Math.max(0, window.innerHeight - size - horizontalMargin);
         const sideZoneWidth = Math.max(Math.floor(window.innerWidth * 0.32), size + horizontalMargin);
 
         const leftZoneMin = horizontalMargin;
@@ -271,57 +286,45 @@
         const x = useLeftSide
             ? leftZoneMin + Math.random() * (leftZoneMax - leftZoneMin)
             : rightZoneMin + Math.random() * (rightZoneMax - rightZoneMin);
-        const y = Math.random() * maxY;
+        const y = horizontalMargin + Math.random() * (maxY - horizontalMargin);
         const rotation = (Math.random() - 0.5) * 12;
 
-        heart.style.fontSize = `${size}px`;
-        heart.style.left = `${x}px`;
-        heart.style.top = `${y}px`;
-        heart.style.setProperty('--heart-rotation', `${rotation}deg`);
+        heartContainer.style.width = `${size}px`;
+        heartContainer.style.height = `${size}px`;
+        heartContainer.style.left = `${x}px`;
+        heartContainer.style.top = `${y}px`;
+        heartContainer.style.setProperty('--heart-rotation', `${rotation}deg`);
 
-        return heart;
+        return heartContainer;
     };
 
     const showTypingEyes = () => {
         const now = Date.now();
-        const shouldSpawnNewHeart = !activeHeart || (now - lastHeartSpawnAt) > HEART_VARIATION_COOLDOWN_MS;
+        const shouldSpawnNewHeart = (now - lastHeartSpawnAt) > HEART_VARIATION_COOLDOWN_MS;
 
         if (shouldSpawnNewHeart) {
-            activeHeart = spawnTypingEye();
+            const heart = spawnTypingEye();
             lastHeartSpawnAt = now;
-            $typingEyes.textContent = '';
-            $typingEyes.appendChild(activeHeart);
-        }
+            $typingEyes.appendChild(heart);
 
-        activeHeart.classList.remove('is-fading');
-        activeHeart.classList.remove('is-active');
-
-        requestAnimationFrame(() => {
-            if (activeHeart) {
-                activeHeart.classList.add('is-active');
-            }
-        });
-
-        clearTimeout(typingStopTimeout);
-        typingStopTimeout = setTimeout(() => {
-            if (!activeHeart) {
-                return;
-            }
-
-            activeHeart.classList.remove('is-active');
-            activeHeart.classList.add('is-fading');
+            // Clean up individual heart after it fades
+            requestAnimationFrame(() => {
+                heart.classList.add('is-active');
+            });
 
             setTimeout(() => {
-                if (activeHeart && activeHeart.classList.contains('is-fading')) {
-                    $typingEyes.textContent = '';
-                    activeHeart = null;
-                }
-            }, HEART_FADE_OUT_MS);
-        }, HEART_HIDE_DELAY_MS);
+                heart.classList.remove('is-active');
+                heart.classList.add('is-fading');
+                setTimeout(() => {
+                    heart.remove();
+                }, HEART_FADE_OUT_MS);
+            }, HEART_HIDE_DELAY_MS);
+        }
     };
 
     const init = () => {
         setupStartScreen();
+        setupSkipButton();
         $qrEnvelope.addEventListener('pointerdown', openEnvelope, { once: true });
 
         socket = io.connect('/');
@@ -373,6 +376,12 @@
 
         peer.on('data', data => {
             const message = data.toString();
+
+            if (message === '__DISCONNECT__') {
+                console.log('Remote disconnected. Resetting...');
+                window.location.reload();
+                return;
+            }
 
             if (message === '__BELL__') {
                 playBellSound();
@@ -438,6 +447,11 @@
 
         peer.on('error', err => {
             console.error('Peer error:', err);
+        });
+
+        peer.on('close', () => {
+            console.log('Peer connection closed. Resetting to start screen...');
+            window.location.reload();
         });
     };
 
