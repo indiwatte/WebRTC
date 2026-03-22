@@ -94,7 +94,7 @@ peer.on('data', data => {
 ## Adding Sounds
 
 ### Problem 1: Typewriter Sound Per Keystroke
-Needed a sound to play every time I type. Easy right? Wrong.
+Needed a sound to play every time I type, harder then expected
 
 **Issue:** If you type fast, sounds cut each other off
 **Solution:** Clone the audio element each time
