@@ -13,41 +13,32 @@
     <div class="container">
         <h1>Type your letter here</h1>
         <div id="status">Connecting...</div>
-        <div class="seal-actions" id="sealActions" hidden>
-            <span class="seal-message">Your letter is sealed and stamped.</span>
-            <button class="save-letter-btn" id="saveLetterBtn" type="button" hidden>Save my letter</button>
+
+        <div class="typing-surface" id="typingSurface" role="button" tabindex="0" aria-label="Tap here to type">
+            <p>Start typing here...</p>
+            <p class="swipe-hint" id="lineGuide"><span class="typing-caret"></span></p>
         </div>
-        <div class="top-controls">
-            <div class="ink-color-selector">
-                <div>ink color</div>
-                <div class="color-ball"></div>
-            </div>
-            <div class="done-bar">
-                <div>stamp</div>
-                <button class="done-envelope-btn" id="doneBtn" aria-label="Done">
-                    <img src="images/stamp.png" alt="Done">
-                </button>
-            </div>
-            <div class="sticker-selector">
-                <div>sticker</div>
-                <img src="images/heart.png" alt="heart" class="heart-icon">
-            </div>
-        </div>
+
         <div class="paper-playground" id="paperPlayground">
             <div class="paper-sheet" id="paperSheet" role="button" tabindex="0"
                 aria-label="Drag this paper to the trash"><span class="paper-label">empty paper</span></div>
             <div class="trash-bin" id="trashBin" aria-hidden="true">🗑️</div>
+            <div class="paper-hint">Drag the paper to the trash to restart.</div>
         </div>
-        <div class="paper-hint">Drag the paper to the trash to restart.</div>
-        <div class="typing-surface" id="typingSurface" role="button" tabindex="0" aria-label="Tap here to type">
-            <p>Start typing here..</p>
-            <p class="swipe-hint">Swipe left ←<span class="typing-caret"></span></p>
+
+        <div id="motionInstruction" class="instruction">
+            Make a sharp motion towards the letter on the screen to seal it, (like a remote).
         </div>
-        <div class="line-guide" id="lineGuide">Swipe left or flick phone left to return carriage.</div>
         <div class="motion-bar" id="motionBar">
-            <button class="motion-btn" id="motionBtn">Enable motion sensor</button>
+            <button class="motion-btn" id="motionBtn">Turn on motion for sealing</button>
             <span class="motion-status" id="motionStatus"></span>
         </div>
+
+        <div class="seal-actions" id="sealActions" hidden>
+            <span class="seal-message">Your letter is sealed and stamped.</span>
+            <button class="motion-btn" id="saveLetterBtn" type="button" hidden>Save my letter</button>
+        </div>
+
         <textarea id="letterInput" autocomplete="off" autocorrect="off" autocapitalize="on"
             spellcheck="false"></textarea>
     </div>

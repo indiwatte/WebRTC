@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Typewriter application</title>
+    <link rel="icon" type="image/png" href="images/T.png">
     <link rel="stylesheet" href="https://use.typekit.net/njf0vdi.css">
     <link rel="stylesheet" href="index.css">
 </head>
@@ -15,22 +16,15 @@
     </div>
 
     <section class="intro-screen" id="introScreen">
+        <button id="skipIntroBtn" class="skip-intro-btn">Skip intro</button>
         <p class="intro-quote" id="introQuote"></p>
         <div class="intro-qr-wrap" id="introQrWrap">
-            <p class="intro-instruction">Scan to write your letter</p>
+            <p class="intro-instruction">Open the letter and scan to start writing your own letter</p>
+                        <p class="intro-instruction">Turn on your sound for the full experience.</p>
             <div class="qr-stage">
                 <a href="#" id="remoteUrl">Preparing QR code...</a>
                 <div class="qr-envelope" aria-hidden="true">
-                    <svg class="qr-envelope-svg" viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg"
-                        role="presentation">
-                        <rect x="14" y="36" width="212" height="148" rx="8" fill="#FDF8F9" stroke="#5f4f4a"
-                            stroke-width="4" />
-                        <polygon class="qr-envelope-flap" points="14,36 120,112 226,36" fill="#FDF8F9" stroke="#5f4f4a"
-                            stroke-width="4" />
-                        <polygon points="14,184 120,112 14,36" fill="#FDF8F9" stroke="#5f4f4a" stroke-width="4" />
-                        <polygon points="226,184 120,112 226,36" fill="#FDF8F9" stroke="#5f4f4a" stroke-width="4" />
-                        <polygon points="14,184 120,112 226,184" fill="#FDF8F9" stroke="#5f4f4a" stroke-width="4" />
-                    </svg>
+                    <img src="./images/enveloppe.png" alt="envelope image" class="qr-envelope-svg">
                 </div>
             </div>
         </div>
@@ -51,6 +45,7 @@
                 <img class="typewriter-base" src="images/typewriter-part1.png" alt="typewriter body">
                 <img class="typewriter-carriage" src="images/typewriter-part2.png" alt="typewriter carriage">
             </div>
+            <p class="desktop-footer">Indi Watté ® 2026</p>
         </div>
     </div>
     <audio id="sentenceSound" src="audio/sentence.mp3" preload="auto"></audio>

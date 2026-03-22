@@ -5,11 +5,12 @@
     const $lineGuide = document.getElementById('lineGuide');
     const $paperSheet = document.getElementById('paperSheet');
     const $trashBin = document.getElementById('trashBin');
-    const $doneBtn = document.getElementById('doneBtn');
+    // const $doneBtn = document.getElementById('doneBtn'); // Removed
     const $sealActions = document.getElementById('sealActions');
     const $sealMessage = document.querySelector('.seal-message');
     const $saveLetterBtn = document.getElementById('saveLetterBtn');
     const $stampSound = document.getElementById('stampSound');
+    const $motionInstruction = document.getElementById('motionInstruction');
 
     let socket;
     let peer;
@@ -34,8 +35,8 @@
     const SWIPE_VERTICAL_TOLERANCE = 45;
     const MOTION_THRESHOLD = 15;
     const MOTION_DEBOUNCE_MS = 800;
-    const GYROSCOPE_TILT_THRESHOLD = 1.8;
-    const GYROSCOPE_DEBOUNCE_MS = 600;
+    const STAMP_MOTION_THRESHOLD = 9; // High Z-axis acceleration (forward motion)
+    const STAMP_DEBOUNCE_MS = 1200;
 
     const getUrlParameter = name => {
         name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
@@ -53,7 +54,7 @@
         }
 
         console.log('Target Socket ID:', targetSocketId);
-        $status.textContent = 'Connecting to desktop...';
+        $status.textContent = 'Connecting to the screen...';
 
         socket = io.connect('/');
         socket.on('connect', () => {
@@ -94,9 +95,9 @@
 
         if (isActive) {
             lineGuideTimeout = setTimeout(() => {
-                $lineGuide.textContent = 'Swipe left to start a new line.';
+                $lineGuide.textContent = '';
                 $lineGuide.classList.remove('active');
-            }, 1800);
+            }, 3000); // Increased timeout to read
         }
     };
 
@@ -211,6 +212,7 @@
         }
 
         showLineGuide('New empty paper ready.', false);
+        if ($motionInstruction) $motionInstruction.hidden = false;
         clearTimeout(crumpleTimeout);
         crumpleTimeout = setTimeout(() => {
             $paperSheet.classList.remove('crumpling');
@@ -269,6 +271,27 @@
         setTimeout(() => $container.classList.remove('carriage-flash'), 350);
     };
 
+    const sealLetter = (guideMessage = 'Letter sealed.') => {
+        const letterContent = $letterInput.value || '';
+        if (!letterContent.trim()) {
+            showLineGuide('Write your letter before sealing it.', true);
+            return false;
+        }
+
+        playStampSound();
+
+        if (peer && peer.connected) {
+            peer.send('__DONE__');
+        } else {
+            console.log('Peer not connected yet');
+        }
+
+        isLetterSealed = true;
+        setSaveButtonVisible(true);
+        $motionInstruction.hidden = true; // Hide instruction when sealed
+        return true;
+    };
+
     const triggerMotionFromX = xAxisAcceleration => {
         if (xAxisAcceleration === null || xAxisAcceleration === undefined) return;
         const now = Date.now();
@@ -281,32 +304,26 @@
         }
     };
 
-    const triggerTiltToDone = gyroscopeX => {
-        if (gyroscopeX === null || gyroscopeX === undefined) return;
+    const triggerStampMotion = zAxisAcceleration => {
+        if (zAxisAcceleration === null || zAxisAcceleration === undefined) return;
         const now = Date.now();
-        if (now - lastMotionTrigger < GYROSCOPE_DEBOUNCE_MS) return;
+        if (now - lastMotionTrigger < STAMP_DEBOUNCE_MS) return;
 
-        if (gyroscopeX > GYROSCOPE_TILT_THRESHOLD) {
+        // Check for strong forward motion (Z-axis)
+        // Values are typically negative when pushing phone away/down depending on implementation
+        if (Math.abs(zAxisAcceleration) > STAMP_MOTION_THRESHOLD) {
             lastMotionTrigger = now;
-            const letterContent = $letterInput.value || '';
-            if (!letterContent.trim()) {
-                showLineGuide('Write your letter before sealing it.', true);
-                return;
-            }
-            playStampSound();
-            if (peer && peer.connected) {
-                peer.send('__DONE__');
-            }
-            isLetterSealed = true;
-            setSaveButtonVisible(true);
-            showLineGuide('Letter sealed by tilt!', false);
+            sealLetter('Letter sealed by stamp gesture!');
         }
     };
 
     const handleDeviceMotion = event => {
         const acc = event.acceleration || event.accelerationIncludingGravity;
-        if (!acc) return;
-        triggerMotionFromX(acc.x);
+        if (acc) {
+            triggerMotionFromX(acc.x);
+            // Check Z-axis for the "stamp" (remote click) gesture
+            triggerStampMotion(acc.z);
+        }
     };
 
     const startAccelerometer = () => {
@@ -351,7 +368,13 @@
 
             gyro.addEventListener('error', event => {
                 console.error('Gyroscope error:', event.error);
-                $motionStatus.textContent = 'gyroscope error';
+                if (event.error && event.error.name === 'NotAllowedError') {
+                    $motionStatus.textContent = 'gyroscope permission denied';
+                } else if (event.error && event.error.name === 'SecurityError') {
+                    $motionStatus.textContent = 'gyroscope requires HTTPS';
+                } else {
+                    $motionStatus.textContent = 'gyroscope error';
+                }
             });
 
             gyro.start();
@@ -361,6 +384,11 @@
             return true;
         } catch (err) {
             console.error('Gyroscope start failed:', err);
+            if (err && err.name === 'NotAllowedError') {
+                $motionStatus.textContent = 'gyroscope permission denied';
+            } else if (err && err.name === 'SecurityError') {
+                $motionStatus.textContent = 'gyroscope requires HTTPS';
+            }
             return false;
         }
     };
@@ -368,33 +396,47 @@
     const enableMotion = async () => {
         if (motionSensor) return;
 
-        if (startGyroscope()) {
+        // Log current context for debugging
+        console.log(`Context: ${window.location.protocol}, Secure: ${window.isSecureContext}`);
+
+        if (!window.isSecureContext) {
+            $motionStatus.innerHTML = 'Motion requires HTTPS.<br>Try <b>node index-https.js</b> or a tunnel.';
             return;
         }
 
-        if (startAccelerometer()) {
-            return;
-        }
-
+        // 1. Try iOS 13+ Permission API (DeviceMotionEvent)
         if (typeof DeviceMotionEvent !== 'undefined' &&
             typeof DeviceMotionEvent.requestPermission === 'function') {
             try {
                 const permission = await DeviceMotionEvent.requestPermission();
                 if (permission === 'granted') {
                     window.addEventListener('devicemotion', handleDeviceMotion);
+                    // No orientation listener needed anymore
+
                     $motionBtn.style.display = 'none';
-                    $motionStatus.textContent = '✦ motion active (fallback)';
+                    $motionStatus.textContent = '✦ motion active';
+                    return;
                 } else {
                     $motionStatus.textContent = 'permission denied';
+                    return;
                 }
             } catch (err) {
                 console.error('Motion permission error:', err);
-                $motionStatus.textContent = 'not supported';
+                // Fall through to other methods if this fails
             }
-        } else {
+        }
+
+        // 2. Try Generic Sensor API (Android/Chrome)
+        // Note: Accelerometer API is usually preferred over Gyroscope for linear motion
+        if (startAccelerometer()) {
+            return;
+        }
+
+        // 3. Fallback for non-permission based devices (older iOS, some Android)
+        if (typeof DeviceMotionEvent !== 'undefined') {
             window.addEventListener('devicemotion', handleDeviceMotion);
             $motionBtn.style.display = 'none';
-            $motionStatus.textContent = '✦ motion active (fallback)';
+            $motionStatus.textContent = '✦ motion active (legacy)';
         }
     };
 
@@ -455,7 +497,7 @@
 
             if (exceedsLineLimit(letterContent)) {
                 e.target.value = lastSentValue;
-                showLineGuide('Line full. Swipe left to start a new line.');
+                showLineGuide('Line full. Swipe right to return carriage.');
                 return;
             }
 
@@ -471,7 +513,7 @@
             skipNextInputBell = false;
 
             if (getCurrentLineLength(letterContent) === MAX_CHARS_PER_LINE) {
-                showLineGuide('Line full. Swipe left to start a new line.');
+                showLineGuide('Line full. Swipe right to return carriage.');
             }
         } else {
             console.log('Peer not connected yet');
@@ -490,38 +532,9 @@
 
         if (lineIsFull && isCharacterInsertionKey(e)) {
             e.preventDefault();
-            showLineGuide('Line full. Swipe left to start a new line.');
+            showLineGuide('Line full. Swipe right to return carriage.');
             return;
         }
-    });
-
-    document.querySelector('.heart-icon').addEventListener('click', () => {
-        if (peer && peer.connected) {
-            peer.send('__STICKER__');
-            console.log('Sticker sent!');
-        } else {
-            console.log('Peer not connected yet');
-        }
-    });
-
-    $doneBtn.addEventListener('click', () => {
-        const letterContent = $letterInput.value || '';
-        if (!letterContent.trim()) {
-            showLineGuide('Write your letter before sealing it.', true);
-            return;
-        }
-
-        playStampSound();
-
-        if (peer && peer.connected) {
-            peer.send('__DONE__');
-        } else {
-            console.log('Peer not connected yet');
-        }
-
-        isLetterSealed = true;
-        setSaveButtonVisible(true);
-        showLineGuide('Letter sealed.', false);
     });
 
     $saveLetterBtn.addEventListener('click', () => {
@@ -583,7 +596,7 @@
         const deltaX = touch.clientX - swipeStartX;
         const deltaY = Math.abs(touch.clientY - swipeStartY);
 
-        if (deltaX <= -SWIPE_THRESHOLD && deltaY <= SWIPE_VERTICAL_TOLERANCE) {
+        if (deltaX >= SWIPE_THRESHOLD && deltaY <= SWIPE_VERTICAL_TOLERANCE) {
             triggerCarriageReturn();
             flashContainer();
         }
@@ -593,6 +606,18 @@
         if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
             focusHiddenInput();
+        }
+    });
+
+    window.addEventListener('pagehide', () => {
+        if (peer && peer.connected) {
+            peer.send('__DISCONNECT__');
+        }
+    });
+
+    window.addEventListener('beforeunload', () => {
+        if (peer && peer.connected) {
+            peer.send('__DISCONNECT__');
         }
     });
 
